@@ -1,0 +1,14 @@
+<section class="status-page">
+  <span class="status-icon tone-danger">
+    <%- icon('alert-triangle', 'icon-xl') %>
+  </span>
+  <p class="code"><%= statusCode || 500 %> &middot; Error</p>
+  <h1><%= message || "Something went wrong" %></h1>
+  <p>Please try again, or head back to the homepage.</p>
+  <div class="actions">
+    <a href="/" class="btn btn-primary">Go home</a>
+  </div>
+  <% if (stack) { %>
+    <pre class="stack"><%= stack %></pre>
+  <% } %>
+</section>

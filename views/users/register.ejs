@@ -1,0 +1,46 @@
+<div class="form-card">
+  <span class="avatar" style="margin: 0 auto 14px; background: linear-gradient(135deg, var(--brand-600), #0f172a);">
+    <%- icon('user', 'icon-lg') %>
+  </span>
+  <h1>Create your account</h1>
+  <p class="subtitle">Join Easily Jobs as an applicant or a recruiter.</p>
+
+  <form action="/register" method="POST" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+    <div class="form-group">
+      <label>I am a...</label>
+      <div class="radio-group">
+        <label class="radio-card">
+          <input type="radio" name="role" value="applicant" checked />
+          <span class="radio-icon"><%- icon('search') %></span>
+          <span class="radio-label">Job seeker</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="role" value="recruiter" />
+          <span class="radio-icon"><%- icon('briefcase') %></span>
+          <span class="radio-label">Recruiter</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="name"><%- icon('user') %> Full name</label>
+      <input type="text" id="name" name="name" required />
+    </div>
+
+    <div class="form-group">
+      <label for="email"><%- icon('mail') %> Email</label>
+      <input type="email" id="email" name="email" required />
+    </div>
+
+    <div class="form-group">
+      <label for="password"><%- icon('lock') %> Password</label>
+      <input type="password" id="password" name="password" minlength="8" required />
+      <p class="hint">At least 8 characters.</p>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block btn-lg">Create account</button>
+  </form>
+  <p class="form-footer">Already have an account? <a href="/login">Log in</a></p>
+</div>

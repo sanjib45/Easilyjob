@@ -1,0 +1,56 @@
+<section class="hero">
+  <div class="hero-brand">
+    <span class="brand-mark" style="width:44px;height:44px;font-size:1.1rem;border-radius:12px;">EJ</span>
+    <span class="hero-brand-name">Easily<span>Jobs</span></span>
+  </div>
+  <span class="hero-badge">
+    <%- icon('sparkles') %> Now live &mdash; <%= stats.jobs %> open roles
+  </span>
+  <h1>Find your next role, <span class="accent">or your next hire.</span></h1>
+  <p>Easily Jobs connects applicants with recruiters through a simple, no-nonsense job board &mdash; post a listing in minutes, or apply in one click.</p>
+  <div class="hero-actions">
+    <a href="/jobs" class="btn btn-primary btn-lg">
+      <%- icon('search') %> Browse jobs
+    </a>
+    <% if (!user) { %>
+      <a href="/register" class="btn btn-secondary btn-lg">Create an account</a>
+    <% } else if (user.role === "recruiter") { %>
+      <a href="/jobs/new" class="btn btn-secondary btn-lg">
+        <%- icon('plus') %> Post a job
+      </a>
+    <% } %>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="num"><%= stats.jobs %></div>
+      <div class="label">Open roles</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num"><%= stats.companies %></div>
+      <div class="label">Companies hiring</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num"><%= stats.applicants %></div>
+      <div class="label">Applications sent</div>
+    </div>
+  </div>
+</section>
+
+<div class="grid" style="margin-top: 40px;">
+  <div class="card" style="cursor: default;">
+    <span class="avatar" style="background: var(--brand-600);"><%- icon('zap', 'icon-lg') %></span>
+    <h3>Apply in minutes</h3>
+    <p style="margin:0;">No lengthy profiles &mdash; just your details and a resume upload.</p>
+  </div>
+  <div class="card" style="cursor: default;">
+    <span class="avatar" style="background: var(--accent-500);"><%- icon('shield-check', 'icon-lg') %></span>
+    <h3>Built to be secure</h3>
+    <p style="margin:0;">Hashed credentials, CSRF-protected forms, and rate-limited login.</p>
+  </div>
+  <div class="card" style="cursor: default;">
+    <span class="avatar" style="background: var(--success-500);"><%- icon('layers', 'icon-lg') %></span>
+    <h3>Simple recruiter tools</h3>
+    <p style="margin:0;">Post, edit, and track applicants for every job you list.</p>
+  </div>
+</div>

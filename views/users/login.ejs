@@ -1,0 +1,24 @@
+<div class="form-card">
+  <span class="avatar" style="margin: 0 auto 14px; background: linear-gradient(135deg, var(--brand-600), #0f172a);">
+    <%- icon('lock', 'icon-lg') %>
+  </span>
+  <h1>Welcome back</h1>
+  <p class="subtitle">Log in to continue to Easily Jobs.</p>
+
+  <form action="/login" method="POST" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+    <div class="form-group">
+      <label for="email"><%- icon('mail') %> Email</label>
+      <input type="email" id="email" name="email" required autofocus />
+    </div>
+
+    <div class="form-group">
+      <label for="password"><%- icon('lock') %> Password</label>
+      <input type="password" id="password" name="password" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block btn-lg">Log in</button>
+  </form>
+  <p class="form-footer">Don't have an account? <a href="/register">Sign up</a></p>
+</div>

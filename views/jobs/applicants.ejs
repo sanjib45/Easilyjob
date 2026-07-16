@@ -1,0 +1,54 @@
+<a href="/jobs/<%= job.id %>" class="hint" style="display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;">
+  <%- icon('arrow-left') %> Back to job
+</a>
+
+<div class="page-header">
+  <div>
+    <span class="eyebrow">Applicants</span>
+    <h1><%= job.jobdesignation %></h1>
+    <p class="subtitle"><%= applicants.length %> applicant<%= applicants.length === 1 ? "" : "s" %> for this role.</p>
+  </div>
+</div>
+
+<% if (applicants.length === 0) { %>
+  <div class="empty-state">
+    <%- icon('users', 'icon-xl') %>
+    <h3>No applications yet</h3>
+    <p>Share the job listing to start receiving applicants.</p>
+  </div>
+<% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Applicant</th>
+          <th>Contact</th>
+          <th>Applied</th>
+          <th>Resume</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% applicants.forEach(function (applicant) { %>
+          <tr>
+            <td>
+              <div class="cell-user">
+                <span class="avatar-sm" style="background: <%= colorForName(applicant.name) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;"><%= initialsFor(applicant.name) %></span>
+                <div>
+                  <div class="name"><%= applicant.name %></div>
+                  <div class="sub"><%= applicant.email %></div>
+                </div>
+              </div>
+            </td>
+            <td><%= applicant.contact %></td>
+            <td><%= timeAgo(applicant.appliedAt) %></td>
+            <td>
+              <a href="<%= applicant.resumePath %>" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+                <%- icon('file-text') %> Resume
+              </a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>

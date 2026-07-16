@@ -1,0 +1,58 @@
+<div class="form-card wide">
+  <span class="eyebrow" style="text-align:center;">Recruiter</span>
+  <h1>Edit job</h1>
+  <p class="subtitle"><%= job.jobdesignation %> at <%= job.companyname %></p>
+
+  <form action="/jobs/<%= job.id %>/edit" method="POST" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="jobdesignation"><%- icon('briefcase') %> Job title</label>
+        <input type="text" id="jobdesignation" name="jobdesignation" value="<%= job.jobdesignation %>" required autofocus />
+      </div>
+      <div class="form-group">
+        <label for="jobcategory">Category</label>
+        <input type="text" id="jobcategory" name="jobcategory" value="<%= job.jobcategory %>" required />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="companyname"><%- icon('building') %> Company name</label>
+        <input type="text" id="companyname" name="companyname" value="<%= job.companyname %>" required />
+      </div>
+      <div class="form-group">
+        <label for="joblocation"><%- icon('map-pin') %> Location</label>
+        <input type="text" id="joblocation" name="joblocation" value="<%= job.joblocation %>" required />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="salary"><%- icon('dollar-sign') %> Salary</label>
+        <input type="text" id="salary" name="salary" value="<%= job.salary %>" required />
+      </div>
+      <div class="form-group">
+        <label for="openings"><%- icon('users') %> Number of openings</label>
+        <input type="number" id="openings" name="openings" min="1" value="<%= job.openings %>" required />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="applyby"><%- icon('calendar') %> Apply by</label>
+      <input type="date" id="applyby" name="applyby" value="<%= new Date(job.applyby).toISOString().slice(0, 10) %>" required />
+    </div>
+
+    <div class="form-group">
+      <label for="skillrequired">Required skills</label>
+      <input type="text" id="skillrequired" name="skillrequired" value="<%= job.skillrequired.join(', ') %>" required />
+      <p class="hint">Comma-separated.</p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button type="submit" class="btn btn-primary btn-block btn-lg">Save changes</button>
+      <a href="/jobs/<%= job.id %>" class="btn btn-secondary btn-lg">Cancel</a>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,111 @@
+<a href="/jobs" class="hint" style="display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;">
+  <%- icon('arrow-left') %> Back to all jobs
+</a>
+
+<div class="job-detail-header">
+  <span class="avatar" style="width:56px;height:56px;font-size:1.3rem;background: <%= colorForName(job.companyname) %>"><%= job.companyname.charAt(0).toUpperCase() %></span>
+  <div class="heading-block">
+    <h1><%= job.jobdesignation %></h1>
+    <p class="company">
+      <%- icon('building') %>
+      <%= job.companyname %> &middot; <%= job.joblocation %> &middot; Posted <%= timeAgo(job.jobposted) %>
+    </p>
+    <div class="tags">
+      <% job.skillrequired.forEach(function (skill) { %>
+        <span class="tag"><%= skill %></span>
+      <% }) %>
+    </div>
+  </div>
+
+  <% if (user && user.role === "recruiter" && user.id === job.recruiterId) { %>
+    <div class="card-actions">
+      <a href="/jobs/<%= job.id %>/edit" class="btn btn-secondary btn-sm"><%- icon('edit') %> Edit</a>
+      <a href="/jobs/<%= job.id %>/applicants" class="btn btn-secondary btn-sm"><%- icon('users') %> Applicants (<%= job.applicants.length %>)</a>
+      <form action="/jobs/<%= job.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this job posting?');">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <button type="submit" class="btn btn-danger btn-sm"><%- icon('trash') %> Delete</button>
+      </form>
+    </div>
+  <% } %>
+</div>
+
+<div class="detail-grid">
+  <div class="panel">
+    <h2>Job details</h2>
+    <ul class="info-list">
+      <li>
+        <span class="label"><%- icon('briefcase') %> Category</span>
+        <span class="value"><%= job.jobcategory %></span>
+      </li>
+      <li>
+        <span class="label"><%- icon('dollar-sign') %> Salary</span>
+        <span class="value"><%= job.salary %></span>
+      </li>
+      <li>
+        <span class="label"><%- icon('users') %> Openings</span>
+        <span class="value"><%= job.openings %></span>
+      </li>
+      <li>
+        <span class="label"><%- icon('calendar') %> Apply by</span>
+        <span class="value">
+          <%= formatDate(job.applyby) %>
+          <% if (daysUntil(job.applyby) >= 0) { %>
+            <span class="hint" style="margin:0;">(<%= daysUntil(job.applyby) %>d left)</span>
+          <% } else { %>
+            <span class="hint" style="margin:0;color:var(--danger-500);">(closed)</span>
+          <% } %>
+        </span>
+      </li>
+      <li>
+        <span class="label"><%- icon('clock') %> Posted</span>
+        <span class="value"><%= formatDate(job.jobposted) %></span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="panel sticky">
+    <h2>Apply for this job</h2>
+    <% if (alreadyApplied) { %>
+      <div class="alert alert-success">
+        <%- icon('check-circle') %>
+        <span>You've already applied to this job.</span>
+      </div>
+    <% } else if (user && user.role === "recruiter") { %>
+      <p class="hint">Recruiters can't apply to job postings.</p>
+    <% } else if (daysUntil(job.applyby) < 0) { %>
+      <div class="alert alert-error">
+        <%- icon('alert-circle') %>
+        <span>Applications for this job have closed.</span>
+      </div>
+    <% } else { %>
+      <form action="/jobs/<%= job.id %>/apply" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+        <div class="form-group">
+          <label for="name">Full name</label>
+          <input type="text" id="name" name="name" value="<%= user ? user.name : '' %>" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" value="<%= user ? user.email : '' %>" required />
+        </div>
+
+        <div class="form-group">
+          <label for="contact">Contact number</label>
+          <input type="tel" id="contact" name="contact" required />
+        </div>
+
+        <div class="form-group">
+          <label for="resume">Resume</label>
+          <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required />
+          <p class="hint">PDF, DOC, or DOCX &mdash; max <%= maxUploadSizeMb %>MB.</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg">
+          <%- icon('upload') %> Submit application
+        </button>
+      </form>
+    <% } %>
+  </div>
+</div>

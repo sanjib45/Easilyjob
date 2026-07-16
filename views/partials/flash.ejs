@@ -1,0 +1,14 @@
+<% if (typeof messages !== "undefined") { %>
+  <% (messages.error || []).forEach(function (msg) { %>
+    <div class="alert alert-error">
+      <%- icon('alert-circle') %>
+      <span><%= msg %></span>
+    </div>
+  <% }) %>
+  <% (messages.success || []).forEach(function (msg) { %>
+    <div class="alert alert-success">
+      <%- icon('check-circle') %>
+      <span><%= msg %></span>
+    </div>
+  <% }) %>
+<% } %>

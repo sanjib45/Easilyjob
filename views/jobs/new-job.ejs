@@ -1,0 +1,57 @@
+<div class="form-card wide">
+  <span class="eyebrow" style="text-align:center;">Recruiter</span>
+  <h1>Post a job</h1>
+  <p class="subtitle">Fill in the details below &mdash; it'll be live on the job board immediately.</p>
+
+  <form action="/jobs/new" method="POST" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="jobdesignation"><%- icon('briefcase') %> Job title</label>
+        <input type="text" id="jobdesignation" name="jobdesignation" placeholder="e.g. Full Stack Developer" required autofocus />
+      </div>
+      <div class="form-group">
+        <label for="jobcategory">Category</label>
+        <input type="text" id="jobcategory" name="jobcategory" placeholder="e.g. Software Development" required />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="companyname"><%- icon('building') %> Company name</label>
+        <input type="text" id="companyname" name="companyname" required />
+      </div>
+      <div class="form-group">
+        <label for="joblocation"><%- icon('map-pin') %> Location</label>
+        <input type="text" id="joblocation" name="joblocation" placeholder="e.g. Remote, Bangalore" required />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="salary"><%- icon('dollar-sign') %> Salary</label>
+        <input type="text" id="salary" name="salary" placeholder="e.g. 8-12 LPA" required />
+      </div>
+      <div class="form-group">
+        <label for="openings"><%- icon('users') %> Number of openings</label>
+        <input type="number" id="openings" name="openings" min="1" value="1" required />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="applyby"><%- icon('calendar') %> Apply by</label>
+      <input type="date" id="applyby" name="applyby" required />
+    </div>
+
+    <div class="form-group">
+      <label for="skillrequired">Required skills</label>
+      <input type="text" id="skillrequired" name="skillrequired" placeholder="e.g. JavaScript, React, Node.js" required />
+      <p class="hint">Comma-separated.</p>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block btn-lg">
+      <%- icon('plus') %> Post job
+    </button>
+  </form>
+</div>

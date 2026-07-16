@@ -1,0 +1,12 @@
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <span class="footer-brand">
+      <span class="brand-mark" style="width:22px;height:22px;font-size:0.65rem;">EJ</span>
+      Easily Jobs
+    </span>
+    <p style="margin:0;">&copy; <%= new Date().getFullYear() %> Easily Jobs. Built for demo purposes.</p>
+    <% if (typeof lastVisit !== "undefined" && lastVisit) { %>
+      <p class="muted" style="margin:0;">Last visit: <%= lastVisit %></p>
+    <% } %>
+  </div>
+</footer>
