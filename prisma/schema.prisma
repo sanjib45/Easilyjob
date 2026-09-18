@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid()) @map("_id")
+  name          String
+  email         String    @unique
+  passwordHash  String
+  /// APPLICANT | RECRUITER
+  role          String
+  emailVerified Boolean   @default(false)
+  verifyToken   String?   @unique
+  verifyExpires DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  jobs          Job[]
+  applications  Application[]
+  refreshTokens RefreshToken[]
+}
+
+model Job {
+  id                   String    @id @default(cuid()) @map("_id")
+  category             String
+  designation          String
+  location             String
+  companyName          String
+  salary               String
+  openings             Int
+  skills               String
+  applyBy              DateTime
+  status               String    @default("OPEN")
+  closedAt             DateTime?
+  publishedAt          DateTime?
+  applicationsAccepted Int       @default(0)
+  recruiterId          String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@index([recruiterId])
+  @@index([location])
+  @@index([category])
+  @@index([applyBy])
+  @@index([status, applyBy, createdAt])
+  @@index([recruiterId, status, createdAt])
+}
+
+model Application {
+  id          String   @id @default(cuid()) @map("_id")
+  jobId       String
+  applicantId String?
+  name        String
+  email       String
+  contact     String
+  resumePath  String
+  createdAt   DateTime @default(now())
+
+  job       Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicant User? @relation(fields: [applicantId], references: [id], onDelete: SetNull)
+
+  @@unique([jobId, email])
+  @@index([applicantId])
+  @@index([jobId, createdAt])
+  @@index([applicantId, createdAt])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid()) @map("_id")
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  userAgent String?
+  ip        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid()) @map("_id")
+  toEmail   String
+  subject   String
+  type      String
+  status    String
+  error     String?
+  createdAt DateTime @default(now())
+}
