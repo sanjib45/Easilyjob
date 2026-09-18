@@ -1,31 +1,29 @@
 import crypto from "crypto";
 import { AppError } from "../utils/AppError.js";
+import { env } from "../config/env.js";
 
-/** Ensures every session has a CSRF token and exposes it to views as csrfToken. */
+const CSRF_COOKIE = "csrf_token";
+const cookieOpts = () => ({ httpOnly: false, sameSite: "lax", secure: env.isProd || env.forceSecureCookies, path: "/" });
+
 export const attachCsrfToken = (req, res, next) => {
-  if (!req.session.csrfToken) {
-    req.session.csrfToken = crypto.randomBytes(24).toString("hex");
+  let token = req.cookies[CSRF_COOKIE];
+  if (!token) {
+    token = crypto.randomBytes(24).toString("hex");
+    res.cookie(CSRF_COOKIE, token, cookieOpts());
   }
-  res.locals.csrfToken = req.session.csrfToken;
+  res.locals.csrfToken = token;
   next();
 };
 
-const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-
-/** Rejects state-changing requests that don't carry a matching CSRF token. */
+const SAFE = new Set(["GET", "HEAD", "OPTIONS"]);
 export const verifyCsrfToken = (req, res, next) => {
-  if (SAFE_METHODS.has(req.method)) return next();
-
-  const tokenFromRequest = req.body?._csrf;
-  if (
-    tokenFromRequest &&
-    req.session.csrfToken &&
-    tokenFromRequest === req.session.csrfToken
-  ) {
-    return next();
+  if (SAFE.has(req.method)) return next();
+  const cookieToken = req.cookies[CSRF_COOKIE];
+  const bodyToken = req.body?._csrf;
+  if (cookieToken && bodyToken) {
+    const a = Buffer.from(cookieToken);
+    const b = Buffer.from(bodyToken);
+    if (a.length === b.length && crypto.timingSafeEqual(a, b)) return next();
   }
-
-  return next(
-    new AppError("Your form session expired or is invalid. Please try again.", 403)
-  );
+  return next(new AppError("Your form session expired or is invalid. Please try again.", 403));
 };

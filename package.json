@@ -9,7 +9,14 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db:migrate": "node scripts/setup-mongodb.mjs",
+    "db:import:mongodb": "node scripts/migrate-sqlite-to-mongodb.mjs",
+    "db:import:mongodb:replace": "cross-env MONGO_IMPORT_REPLACE=true node scripts/migrate-sqlite-to-mongodb.mjs",
+    "db:seed": "node prisma/seed.js",
+    "db:studio": "prisma studio",
+    "smoke": "node scripts/smoke-test.mjs",
+    "test": "node scripts/smoke-test.mjs",
+    "postinstall": "prisma generate"
   },
   "keywords": [
     "job-portal",
@@ -18,27 +25,29 @@
   ],
   "author": "",
   "license": "ISC",
-  "description": "A job portal (recruiters post jobs, applicants apply) built with Express, EJS, and session-based auth.",
+  "description": "Job portal with Prisma, JWT access/refresh tokens, and email verification.",
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
-    "connect-flash": "^0.1.1",
+    "cross-env": "^7.0.3",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
     "express-rate-limit": "^8.6.0",
-    "express-session": "^1.18.1",
     "express-validator": "^7.2.1",
     "helmet": "^8.3.0",
-    "lowdb": "^7.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^6.13.1",
     "morgan": "^1.11.0",
     "multer": "^1.4.5-lts.2",
     "nodemailer": "^9.0.3",
-    "session-file-store": "^1.5.0"
+    "sql.js": "^1.14.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prisma": "^5.22.0"
   }
 }
