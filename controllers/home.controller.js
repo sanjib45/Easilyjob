@@ -1,16 +1,11 @@
-import { getAllJobs } from "../models/job.model.js";
+import { prisma } from "../config/prisma.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const renderHome = (req, res) => {
-  const jobs = getAllJobs();
-  const totalApplicants = jobs.reduce((sum, job) => sum + job.applicants.length, 0);
-  const companies = new Set(jobs.map((job) => job.companyname));
-
-  res.render("index", {
-    title: "Home",
-    stats: {
-      jobs: jobs.length,
-      companies: companies.size,
-      applicants: totalApplicants,
-    },
-  });
-};
+export const renderHome = asyncHandler(async (req, res) => {
+  const [jobs, companies, applicants] = await Promise.all([
+    prisma.job.count({ where: { status: "OPEN", applyBy: { gte: new Date() } } }),
+    prisma.job.findMany({ where: { status: "OPEN", applyBy: { gte: new Date() } }, select: { companyName: true }, distinct: ["companyName"] }),
+    prisma.application.count(),
+  ]);
+  res.render("index", { title: "Home", stats: { jobs, companies: companies.length, applicants } });
+});
