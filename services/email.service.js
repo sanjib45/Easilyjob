@@ -51,6 +51,14 @@ const templates = {
       <p><strong>${escapeHtml(applicantName)}</strong> just applied to <strong>${escapeHtml(jobTitle)}</strong>.</p>
       <p><a href="${env.appUrl}/recruiter">Open your dashboard</a></p>`,
   }),
+  APPLICATION_SHORTLISTED: ({ applicantName, jobTitle, companyName, nextStep }) => ({
+    subject: `You have been shortlisted — ${jobTitle}`,
+    text: `Hi ${applicantName},\n\nYou have been shortlisted for "${jobTitle}" at ${companyName}.\n\n${nextStep}\n\n— Easily Jobs`,
+    html: `<p>Hi <strong>${escapeHtml(applicantName)}</strong>,</p>
+      <p>You have been shortlisted for <strong>${escapeHtml(jobTitle)}</strong> at <strong>${escapeHtml(companyName)}</strong>.</p>
+      <p>${escapeHtml(nextStep)}</p>
+      <p style="color:#64748b;">— Easily Jobs</p>`,
+  }),
 };
 
 /**

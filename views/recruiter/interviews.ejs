@@ -1,0 +1,39 @@
+<div class="page-header">
+  <div>
+    <span class="eyebrow">Recruiter workspace</span>
+    <h1>Interviews</h1>
+    <p class="subtitle">Manage scheduled interviews for your applicants.</p>
+  </div>
+</div>
+
+<% if (interviews.length === 0) { %>
+  <div class="empty-state">
+    <%- icon('calendar', 'icon-xl') %>
+    <h3>No interviews scheduled</h3>
+    <p>Schedule an interview from an applicant review page.</p>
+  </div>
+<% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Applicant</th><th>Job</th><th>Scheduled</th><th>Status</th><th>Evaluation</th><th>Update</th></tr></thead>
+      <tbody>
+        <% interviews.forEach(function (interview) { %>
+          <tr>
+            <td><a href="/recruiter/applicants/<%= interview.applicationId %>"><%= interview.application.name %></a><div class="sub"><%= interview.application.email %></div></td>
+            <td><%= interview.job.designation %></td>
+            <td><%= formatDate(interview.scheduledAt) %> <div class="sub"><%= interview.timezone %></div></td>
+            <td><span class="status-badge"><%= interview.status.replaceAll("_", " ") %></span></td>
+            <td><%= interview.evaluation ? `${interview.evaluation.overallScore}/100` : "Pending" %></td>
+            <td>
+              <form action="/recruiter/interviews/<%= interview.id %>" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <input type="hidden" name="status" value="<%= interview.status === "SCHEDULED" ? "COMPLETED" : interview.status %>" />
+                <button type="submit" class="btn btn-secondary btn-sm"><%= interview.status === "SCHEDULED" ? "Complete" : "Update" %></button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>

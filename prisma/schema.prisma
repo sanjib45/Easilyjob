@@ -23,6 +23,7 @@ model User {
   jobs          Job[]
   applications  Application[]
   refreshTokens RefreshToken[]
+  interviews    Interview[]
 }
 
 model Job {
@@ -45,6 +46,7 @@ model Job {
 
   recruiter    User          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
   applications Application[]
+  interviews   Interview[]
 
   @@index([recruiterId])
   @@index([location])
@@ -62,15 +64,100 @@ model Application {
   email       String
   contact     String
   resumePath  String
+  status      String    @default("NEW")
+  recruiterNote String?
+  statusUpdatedAt DateTime @default(now())
   createdAt   DateTime @default(now())
+  updatedAt   DateTime  @updatedAt
 
   job       Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
   applicant User? @relation(fields: [applicantId], references: [id], onDelete: SetNull)
+  statusHistory ApplicationStatusHistory[]
+  interviews Interview[]
 
   @@unique([jobId, email])
   @@index([applicantId])
   @@index([jobId, createdAt])
   @@index([applicantId, createdAt])
+}
+
+model ApplicationStatusHistory {
+  id            String   @id @default(cuid()) @map("_id")
+  applicationId String
+  actorId       String
+  fromStatus    String?
+  toStatus      String
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model Interview {
+  id                 String   @id @default(cuid()) @map("_id")
+  applicationId      String
+  jobId              String
+  recruiterId        String
+  scheduledAt        DateTime
+  timezone           String
+  durationMinutes    Int      @default(60)
+  meetingUrl         String?
+  location           String?
+  candidateMessage   String?
+  status             String   @default("SCHEDULED")
+  cancellationReason String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  job         Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  recruiter   User        @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  evaluation  InterviewEvaluation?
+
+  @@index([recruiterId, scheduledAt, status])
+  @@index([applicationId, scheduledAt])
+  @@index([jobId, scheduledAt])
+}
+
+model InterviewEvaluation {
+  id                  String   @id @default(cuid()) @map("_id")
+  interviewId         String   @unique
+  applicationId       String
+  recruiterId         String
+  technicalScore      Int
+  communicationScore  Int
+  overallScore        Int
+  recommendation      String
+  strengths           String?
+  concerns            String?
+  privateFeedback     String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@index([recruiterId, createdAt])
+  @@index([applicationId, createdAt])
+}
+
+model EmailOutbox {
+  idempotencyKey String   @id @map("_id")
+  toEmail        String
+  type           String
+  payload        String
+  status         String   @default("QUEUED")
+  attempts       Int      @default(0)
+  nextAttemptAt  DateTime @default(now())
+  sentAt         DateTime?
+  lastError      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([toEmail, createdAt])
 }
 
 model RefreshToken {

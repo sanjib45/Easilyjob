@@ -1,0 +1,130 @@
+<a href="/jobs/<%= application.job.id %>/applicants" class="hint" style="display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;">
+  <%- icon('arrow-left') %> Back to applicants
+</a>
+
+<div class="page-header">
+  <div>
+    <span class="eyebrow">Applicant review</span>
+    <h1><%= application.name %></h1>
+    <p class="subtitle"><%= application.job.designation %> at <%= application.job.companyName %></p>
+  </div>
+  <a href="/jobs/<%= application.job.id %>/applicants/<%= application.id %>/resume" class="btn btn-secondary">
+    <%- icon('file-text') %> Download resume
+  </a>
+</div>
+
+<div class="detail-grid">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Application details</h2>
+      <span class="status-badge"><%= application.status %></span>
+    </div>
+    <dl class="detail-list">
+      <div><dt>Name</dt><dd><%= application.name %></dd></div>
+      <div><dt>Email</dt><dd><a href="mailto:<%= application.email %>"><%= application.email %></a></dd></div>
+      <div><dt>Contact</dt><dd><%= application.contact %></dd></div>
+      <div><dt>Applied</dt><dd><%= formatDate(application.createdAt) %></dd></div>
+      <div><dt>Job</dt><dd><%= application.job.designation %></dd></div>
+      <div><dt>Company</dt><dd><%= application.job.companyName %></dd></div>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Recruiter review</h2>
+    </div>
+    <form action="/recruiter/applicants/<%= application.id %>" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <label for="status">Application status</label>
+      <select id="status" name="status" required>
+        <% ["NEW", "REVIEWING", "SHORTLISTED", "INTERVIEW_SCHEDULED", "INTERVIEWED", "HIRED", "REJECTED"].forEach(function (status) { %>
+          <option value="<%= status %>" <%= application.status === status ? "selected" : "" %>><%= status.replaceAll("_", " ") %></option>
+        <% }) %>
+      </select>
+
+      <label for="recruiterNote">Private recruiter note</label>
+      <textarea id="recruiterNote" name="recruiterNote" rows="6" maxlength="2000"><%= application.recruiterNote || "" %></textarea>
+      <button type="submit" class="btn btn-primary">Save review</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-header">
+    <h2>Schedule interview</h2>
+  </div>
+  <form action="/recruiter/applicants/<%= application.id %>/interviews" method="POST">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <div class="form-grid">
+      <div><label for="scheduledAt">Date and time</label><input id="scheduledAt" type="datetime-local" name="scheduledAt" required /></div>
+      <div><label for="timezone">Timezone</label><input id="timezone" name="timezone" value="UTC" maxlength="80" required /></div>
+      <div><label for="durationMinutes">Duration (minutes)</label><input id="durationMinutes" type="number" name="durationMinutes" value="60" min="15" max="240" required /></div>
+      <div><label for="meetingUrl">Meeting URL</label><input id="meetingUrl" type="url" name="meetingUrl" placeholder="https://..." /></div>
+      <div><label for="location">Location</label><input id="location" name="location" maxlength="200" /></div>
+    </div>
+    <label for="candidateMessage">Message to applicant</label>
+    <textarea id="candidateMessage" name="candidateMessage" rows="3" maxlength="2000"></textarea>
+    <button type="submit" class="btn btn-primary">Schedule interview</button>
+  </form>
+</section>
+
+<% if (application.interviews.length > 0) { %>
+  <section class="panel">
+    <div class="panel-header"><h2>Interview history</h2></div>
+    <% application.interviews.forEach(function (interview) { %>
+      <div class="interview-block">
+        <p><strong><%= formatDate(interview.scheduledAt) %></strong> · <%= interview.timezone %> · <%= interview.status.replaceAll("_", " ") %></p>
+        <% if (interview.meetingUrl) { %><p><a href="<%= interview.meetingUrl %>" target="_blank" rel="noopener noreferrer">Open meeting link</a></p><% } %>
+        <form action="/recruiter/interviews/<%= interview.id %>" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <select name="status" aria-label="Interview status">
+            <% ["SCHEDULED", "RESCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"].forEach(function (status) { %>
+              <option value="<%= status %>" <%= interview.status === status ? "selected" : "" %>><%= status.replaceAll("_", " ") %></option>
+            <% }) %>
+          </select>
+          <input type="text" name="cancellationReason" value="<%= interview.cancellationReason || "" %>" maxlength="500" placeholder="Cancellation reason" />
+          <button type="submit" class="btn btn-secondary btn-sm">Update interview</button>
+        </form>
+        <form action="/recruiter/interviews/<%= interview.id %>/evaluation" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <input type="number" name="technicalScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.technicalScore : "" %>" placeholder="Technical" required />
+          <input type="number" name="communicationScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.communicationScore : "" %>" placeholder="Communication" required />
+          <input type="number" name="overallScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.overallScore : "" %>" placeholder="Overall" required />
+          <select name="recommendation" required>
+            <% ["STRONG_YES", "YES", "MAYBE", "NO"].forEach(function (recommendation) { %>
+              <option value="<%= recommendation %>" <%= interview.evaluation && interview.evaluation.recommendation === recommendation ? "selected" : "" %>><%= recommendation.replaceAll("_", " ") %></option>
+            <% }) %>
+          </select>
+          <textarea name="privateFeedback" rows="2" maxlength="4000" placeholder="Private evaluation feedback"><%= interview.evaluation ? interview.evaluation.privateFeedback || "" : "" %></textarea>
+          <button type="submit" class="btn btn-primary btn-sm">Save evaluation</button>
+        </form>
+      </div>
+    <% }) %>
+  </section>
+<% } %>
+
+<section class="panel">
+  <div class="panel-header">
+    <h2>Status history</h2>
+  </div>
+  <% if (application.statusHistory.length === 0) { %>
+    <p class="hint">No status changes recorded yet.</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>From</th><th>To</th><th>Changed</th></tr>
+        </thead>
+        <tbody>
+          <% application.statusHistory.forEach(function (entry) { %>
+            <tr>
+              <td><%= entry.fromStatus || "Created" %></td>
+              <td><%= entry.toStatus %></td>
+              <td><%= formatDate(entry.createdAt) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>

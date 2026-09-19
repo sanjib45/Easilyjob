@@ -109,6 +109,16 @@ Password rules: min 8 chars, letter + number.
 
 ## Change log
 
+### 2026-09-19 — Recruiter application workspace and interviews
+
+- Added recruiter-wide applicant search, status/job filters, deterministic sorting, and bounded pagination.
+- Added recruiter-owned applicant detail pages with protected resume actions and status history.
+- Added recruiter-owned interview scheduling, lifecycle updates, and evaluation scorecards with bounded marks.
+- Added idempotent shortlist email outbox records and expanded recruiter dashboard metrics/navigation.
+- Added smoke coverage for recruiter route protection, application workspace, and interview workspace.
+
+**Verification:** `npm test` passes; Prisma schema validation and touched-module syntax checks pass.
+
 ### 2026-07-17 — Production DB, JWT auth, email, modals (IMPLEMENTED)
 
 **Plan:** `IMPLEMENTATION_PLAN.md`

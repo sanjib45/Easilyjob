@@ -1,0 +1,70 @@
+<% const pageParams = (page) => new URLSearchParams({ q: filters.search || "", status: filters.status || "", jobId: filters.jobId || "", sort: filters.sort || "newest", limit: String(pagination.limit), page: String(page) }).toString(); %>
+
+<div class="page-header">
+  <div>
+    <span class="eyebrow">Recruiter workspace</span>
+    <h1>Applicants</h1>
+    <p class="subtitle"><%= pagination.total %> application<%= pagination.total === 1 ? "" : "s" %> across your job postings.</p>
+  </div>
+</div>
+
+<section class="panel">
+  <form method="GET" action="/recruiter/applicants" class="filter-row">
+    <input type="search" name="q" value="<%= filters.search %>" placeholder="Search applicant, email, job, or company" />
+    <select name="jobId" aria-label="Filter by job">
+      <option value="">All jobs</option>
+      <% jobs.forEach(function (job) { %>
+        <option value="<%= job.id %>" <%= filters.jobId === job.id ? "selected" : "" %>><%= job.designation %></option>
+      <% }) %>
+    </select>
+    <select name="status" aria-label="Filter by application status">
+      <option value="">All statuses</option>
+      <% ["NEW", "REVIEWING", "SHORTLISTED", "INTERVIEW_SCHEDULED", "INTERVIEWED", "HIRED", "REJECTED"].forEach(function (status) { %>
+        <option value="<%= status %>" <%= filters.status === status ? "selected" : "" %>><%= status.replaceAll("_", " ") %></option>
+      <% }) %>
+    </select>
+    <select name="sort" aria-label="Sort applications">
+      <% [["newest", "Newest"], ["oldest", "Oldest"], ["applicant", "Applicant name"], ["status", "Status"]].forEach(function (option) { %>
+        <option value="<%= option[0] %>" <%= filters.sort === option[0] ? "selected" : "" %>><%= option[1] %></option>
+      <% }) %>
+    </select>
+    <button type="submit" class="btn btn-primary">Apply filters</button>
+  </form>
+</section>
+
+<% if (applications.length === 0) { %>
+  <div class="empty-state">
+    <%- icon('users', 'icon-xl') %>
+    <h3>No matching applications</h3>
+    <p>Try changing the filters or wait for new applications.</p>
+  </div>
+<% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Applicant</th><th>Job</th><th>Applied</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% applications.forEach(function (application) { %>
+          <tr>
+            <td>
+              <div class="cell-user">
+                <span class="avatar-sm" style="background: <%= colorForName(application.name) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;"><%= initialsFor(application.name) %></span>
+                <div><div class="name"><%= application.name %></div><div class="sub"><%= application.email %></div></div>
+              </div>
+            </td>
+            <td><%= application.job.designation %><div class="sub"><%= application.job.companyName %></div></td>
+            <td><%= formatDate(application.createdAt) %></td>
+            <td><span class="status-badge"><%= application.status.replaceAll("_", " ") %></span></td>
+            <td><a href="/recruiter/applicants/<%= application.id %>" class="btn btn-secondary btn-sm">Review</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <nav class="pagination" aria-label="Applicant pages">
+    <% if (pagination.page > 1) { %><a href="/recruiter/applicants?<%= pageParams(pagination.page - 1) %>" class="btn btn-secondary btn-sm">Previous</a><% } %>
+    <span>Page <%= pagination.page %> of <%= pagination.pages %></span>
+    <% if (pagination.page < pagination.pages) { %><a href="/recruiter/applicants?<%= pageParams(pagination.page + 1) %>" class="btn btn-secondary btn-sm">Next</a><% } %>
+  </nav>
+<% } %>

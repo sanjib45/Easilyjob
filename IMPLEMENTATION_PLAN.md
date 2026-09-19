@@ -31,6 +31,214 @@
 8. **Security headers and abuse controls:** replace `contentSecurityPolicy: false` with a tested CSP, add per-account login throttling and account recovery controls, and periodically prune expired/revoked refresh tokens and old email logs.
 9. **Test depth and delivery gates:** add integration tests for authorization isolation, CSRF failures, refresh replay, duplicate/racing applications, upload cleanup, email failure, and production config validation. Run migration, test, audit, and smoke gates in CI.
 
+## 0.2 Recruiter master plan
+
+### Current recruiter capabilities
+
+- Verified recruiters can create, edit, close, and delete their own job postings.
+- The dashboard shows owned jobs and applicant counts.
+- Recruiters can open an applicant list and download resumes through an owner-checked route.
+- Application review supports `NEW`, `REVIEWING`, `SHORTLISTED`, `REJECTED`, and `HIRED` states plus a private recruiter note.
+
+### Missing recruiter capabilities and delivery order
+
+#### R1 — Applicant workflow completion
+
+Add candidate detail views, status filtering, notes history, contact actions, and status-change email notifications. Add bulk status updates only after single-record transitions have integration coverage. Every action must remain scoped by both `jobId` and the authenticated recruiter-owned job.
+
+#### R2 — Job lifecycle and listing quality
+
+Support drafts, publish, reopen, expiry, and archive states instead of creating every job as immediately open. Add server-side expiry processing, clear state transitions, preview validation, and recruiter filters for open, closed, draft, and expired jobs.
+
+#### R3 — Recruiter workspace
+
+Add recruiter profile/company details, dashboard search and pagination, applicant counts by status, remaining openings, recent applications, and CSV export. Keep exports owner-scoped, bounded, and free of resume binaries or unnecessary personal data.
+
+#### R4 — Hiring operations
+
+Add interview scheduling with timezone-aware timestamps, recruiter reminders, optional applicant messages, and an audit trail. Introduce an outbox/queue before sending status or interview emails so a mail-provider failure cannot corrupt hiring state.
+
+#### R5 — Analytics and production hardening
+
+Add privacy-conscious job views, conversion summaries, and time-bucketed recruiter analytics. Move resumes to private object storage with malware scanning, retention, and signed downloads; then add authorization, CSRF, concurrency, upload cleanup, email-failure, and export integration tests.
+
+### Recruiter acceptance criteria
+
+- A recruiter cannot read or mutate jobs, applications, notes, exports, or resumes belonging to another recruiter.
+- A recruiter can move an application through the supported pipeline, filter the pipeline, and see the persisted state after refresh.
+- Public listings never expose drafts, closed jobs, expired jobs, recruiter notes, or resume paths.
+- Job openings cannot be oversubscribed under concurrent applications.
+- Status changes, interview events, and exports are auditable and covered by automated tests.
+- The dashboard remains usable with empty, large, expired, and mixed-status datasets.
+
+## 0.3 Recruiter portal workflow
+
+### Access and role boundary
+
+The existing `isRecruiter` middleware is the correct security boundary. Keep applicant accounts available for applying to jobs, but allow only authenticated users whose persisted role is `RECRUITER` to access recruiter routes, recruiter navigation, applicant records, interview data, scores, notes, exports, and recruiter emails. Do not rely on hidden links or browser-submitted role values.
+
+If the product requirement literally means that applicant accounts must not log in anywhere, disable applicant login only after confirming that applicant applications will be created by another workflow. Otherwise, “recruiter-only login” should mean recruiter-only access to the recruiter portal.
+
+### Recruiter navigation
+
+After login, a recruiter should see a recruiter-specific horizontal navigation bar:
+
+1. **Dashboard** — job totals, open roles, applications, interviews today, and recent activity.
+2. **My Jobs** — owned postings, draft/open/closed/expired filters, create, edit, publish, close, and archive.
+3. **Applicants** — all applicants for owned jobs, searchable and filterable by job and pipeline status.
+4. **Interviews** — upcoming, completed, cancelled, and overdue interviews.
+5. **Reviews** — interview scorecards, feedback, recommendations, and email history.
+6. **Company Profile** — recruiter identity, company information, contact details, and notification preferences.
+7. **Log out** — CSRF-protected POST action.
+
+Applicant links must not appear in the recruiter shell. Every navigation destination must still enforce authentication, recruiter role, email verification where required, and resource ownership on the server.
+
+### Applicant and interview workflow
+
+The recruiter workflow should be:
+
+`NEW -> REVIEWING -> SHORTLISTED -> INTERVIEW_SCHEDULED -> INTERVIEWED -> HIRED | REJECTED`
+
+Recruiters can open an applicant record, view the authorized resume, review all submitted application details, update the pipeline status, add private notes, schedule or reschedule an interview, cancel an interview, and complete an evaluation. Applicants must never see recruiter notes, internal scores, or another applicant’s information.
+
+### Applicant review requirements
+
+The recruiter applicant detail page must show:
+
+- Applicant name, email address, contact number, application date, job title, and current application status.
+- The submitted resume through the recruiter-owned download endpoint. The raw upload directory and stored file path must never be exposed in the HTML.
+- A recruiter-only notes field and status history.
+- Actions for `REVIEWING`, `SHORTLISTED`, `REJECTED`, `INTERVIEW_SCHEDULED`, `INTERVIEWED`, and `HIRED`.
+- Interview schedule, attendance/result, marks, recommendation, and approved communication history when those records exist.
+
+The detail query must load an application only when its `jobId` belongs to the authenticated recruiter. Checking only the application ID is insufficient because IDs can be modified in a URL or form.
+
+### Automatic shortlist email
+
+When a recruiter changes an application to `SHORTLISTED`, the application update and notification request must be handled as one reliable workflow:
+
+1. Validate that the recruiter owns the application’s job and that the transition is allowed.
+2. Persist the new status and status-history record.
+3. Create an idempotent email-outbox record for the applicant.
+4. Deliver the shortlist email asynchronously with retry and failure logging.
+5. Show the recruiter the saved status immediately, even if the email provider is unavailable.
+
+The shortlist email must include the applicant’s name, job title, company name, confirmation that they were shortlisted, and the next step. It must not include recruiter-only notes, internal marks, private evaluation comments, or another applicant’s data. Repeating the same status update must not send duplicate shortlist emails. A later interview invitation must use a separate approved template and delivery record.
+
+Required email types:
+
+- `APPLICATION_SHORTLISTED`
+- `INTERVIEW_INVITATION`
+- `INTERVIEW_RESCHEDULED`
+- `INTERVIEW_CANCELLED`
+- `APPLICATION_REJECTED` (optional product decision, but the template should be prepared)
+
+Email templates must escape user-controlled values, use the applicant’s persisted email address rather than a browser-submitted address, and record `queued`, `sent`, `failed`, or `skipped` delivery state.
+
+### Required data model
+
+- Extend `Application` with status, recruiter note, and status timestamps. Keep the current unique job/application constraint.
+- Add `Interview`: application, recruiter, scheduled time, duration, timezone, meeting link or location, status, candidate message, cancellation reason, and audit timestamps.
+- Add `InterviewEvaluation`: interview, recruiter, numeric score fields, recommendation, strengths, concerns, and private feedback. Enforce score bounds at both validation and persistence boundaries.
+- Add `ApplicationStatusHistory`: application, old status, new status, actor, reason, and timestamp.
+- Add `EmailOutbox` or extend the email outbox design with recipient, template type, payload, status, attempts, and idempotency key. `EmailLog` alone is not enough for reliable retries.
+- Keep resume metadata private and serve files only through an authenticated, recruiter-owned download handler. The applicant detail page may expose a download action, never the filesystem path.
+
+### Recruiter routes
+
+- `GET /recruiter` — dashboard.
+- `GET /recruiter/jobs` — owned job management.
+- `GET /recruiter/applicants` — owned applicant search and filtering.
+- `GET /jobs/:id/applicants/:applicationId` — candidate detail, owner-scoped.
+- `POST /jobs/:id/applicants/:applicationId/status` — pipeline transition.
+- `GET /jobs/:id/applicants/:applicationId/resume` — protected resume download.
+- `GET /jobs/:id/applicants/:applicationId/interviews` — interview history.
+- `POST /jobs/:id/applicants/:applicationId/interviews` — schedule interview.
+- `PATCH /recruiter/interviews/:id` — reschedule, cancel, or complete an interview.
+- `POST /recruiter/interviews/:id/evaluation` — save scorecard and feedback.
+- `POST /recruiter/applications/:id/send-review` — send an approved candidate-facing email.
+- `GET /recruiter/exports/applicants.csv` — bounded, owner-scoped export.
+
+All mutations require CSRF protection, validation, rate limits where email is sent, and an explicit ownership query. Candidate-facing emails must use approved templates, escape all user-controlled HTML, and be queued rather than sent inside the request transaction.
+
+### Delivery phases
+
+#### RP1 — Recruiter shell and dashboard
+
+Create the recruiter layout/navigation, dashboard metrics, owned-job filtering, and recruiter-only integration tests.
+
+#### RP2 — Applicant pipeline
+
+Complete candidate detail pages, full submitted applicant details, status transitions, status history, notes, shortlist email queuing, filtering, protected resume access, duplicate-email prevention, and unauthorized-access tests.
+
+#### RP3 — Interview scheduling
+
+Add interview persistence, timezone-safe forms, schedule/reschedule/cancel flows, calendar-ready meeting links, reminders, and candidate notification emails.
+
+#### RP4 — Evaluation and review email
+
+Add scorecards, bounded marks, recommendation, private feedback, recruiter review history, shortlist/interview/rejection email templates, outbox retries, idempotency, and email delivery audit records.
+
+#### RP5 — Operations and quality gate
+
+Add exports, company profile, activity audit, dashboard analytics, pagination, rate limits, concurrency tests, accessibility checks, and end-to-end recruiter workflow tests.
+
+### End-to-end acceptance scenario
+
+An authenticated recruiter can log in, sees only recruiter navigation, opens the dashboard, selects an owned job, reviews an applicant, downloads the protected resume, shortlists the applicant, schedules an interview with timezone and meeting details, records marks and feedback, sends an approved interview-review email, and sees the complete history after refresh. A second recruiter cannot access any of those records by changing an ID in the URL or form.
+
+The shortlist portion of the scenario must also verify that the applicant receives exactly one `APPLICATION_SHORTLISTED` email, that the email contains no private recruiter data, and that the recruiter’s status remains saved when email delivery is delayed or fails.
+
+## 0.4 Placement Cell adaptation implementation plan
+
+This phase adapts the useful Placement Cell workflows to Easily Jobs without copying its global data access or browser-only authorization model.
+
+### Recruiter workspace
+
+- Add a recruiter-specific layout with Dashboard, My Jobs, Applicants, Interviews, Reviews, Company Profile, and Logout navigation.
+- Keep recruiter routes under separate route modules and controllers; keep domain behavior in services rather than route handlers.
+- Dashboard metrics must be computed from recruiter-owned records only: total jobs, open jobs, total applications, shortlisted applicants, scheduled interviews, completed interviews, and hires.
+- Add recent applications and upcoming interviews ordered by stable timestamps.
+
+### Application workspace
+
+- Add a recruiter-wide application list across owned jobs with job, status, date, and applicant search filters.
+- Support deterministic sorting by newest, oldest, applicant name, job title, and status.
+- Support pagination with bounded page size so one recruiter cannot cause an unbounded query.
+- Keep the job-specific application page and the recruiter-wide application page backed by the same service and authorization predicate.
+- Applicant detail pages show submitted profile data and a protected resume action, never raw storage paths.
+
+### Interview and evaluation workspace
+
+- Add interview records linked to an owned application and recruiter-owned job.
+- Support schedule, reschedule, cancel, complete, attendance result, meeting link/location, and timezone.
+- Add evaluation scorecards with bounded marks, recommendation, strengths, concerns, and private recruiter feedback.
+- Every transition and evaluation write must create an audit record and may notify the applicant through the email outbox.
+
+### Data isolation contract
+
+- Every recruiter query must include `job.recruiterId = req.user.id` or an equivalent service-level ownership predicate.
+- Never authorize an application, interview, evaluation, export, or resume using its child ID alone.
+- Add cross-recruiter tests that attempt access by changing job, application, interview, and evaluation IDs.
+- Applicant-facing routes must exclude recruiter notes, internal scores, status history actors, and private email content.
+
+### Implementation order
+
+1. Finish the recruiter application workspace: filters, sorting, pagination, detail, status history, and shortlist outbox.
+2. Add interview schema, service, routes, forms, lifecycle, and notifications.
+3. Add evaluation schema, score validation, recruiter review pages, and audit history.
+4. Add recruiter layout/sidebar and dashboard metrics backed by the same services.
+5. Add integration tests for isolation, CSRF, sorting, pagination, status transitions, duplicate notifications, interview lifecycle, and evaluation bounds.
+
+### Definition of done
+
+- Two recruiters see only their own jobs, applications, interviews, evaluations, notes, resumes, and exports.
+- Application lists sort and filter deterministically and remain bounded.
+- Shortlisting creates exactly one applicant notification request.
+- Interview and evaluation records cannot be accessed through another recruiter’s IDs.
+- Dashboard totals match recruiter-owned database records.
+- The recruiter workflow passes an authenticated end-to-end test from job selection through shortlist, interview, evaluation, and final decision.
+
 ## 0.1 Ordered master plan
 
 ### Phase G — Production data and storage

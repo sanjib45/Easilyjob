@@ -5,6 +5,7 @@ import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { AppError } from "../utils/AppError.js";
 import { sendApplicationEmails } from "../services/email.service.js";
+import { updateRecruiterApplication } from "../services/recruiter-review.service.js";
 
 const uploadsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "uploads");
 const parseSkills = (value) => Array.isArray(value) ? value.map(String).map((s) => s.trim()).filter(Boolean) : typeof value === "string" ? value.split(",").map((s) => s.trim()).filter(Boolean) : [];
@@ -41,7 +42,9 @@ export const handleApplyToJob = asyncHandler(async (req, res) => {
     application = await prisma.$transaction(async (tx) => {
       const reserved = await tx.job.updateMany({ where: { id: job.id, status: "OPEN", applyBy: { gte: new Date() }, applicationsAccepted: { lt: job.openings } }, data: { applicationsAccepted: { increment: 1 } } });
       if (reserved.count !== 1) throw new AppError("All openings for this job have been filled or applications are closed.", 409);
-      return tx.application.create({ data: { jobId: job.id, applicantId: req.user.id, name: req.user.name, email: req.user.email, contact: req.body.contact.trim(), resumePath: req.file.filename } });
+      const application = await tx.application.create({ data: { jobId: job.id, applicantId: req.user.id, name: req.user.name, email: req.user.email, contact: req.body.contact.trim(), resumePath: req.file.filename } });
+      await tx.applicationStatusHistory.create({ data: { applicationId: application.id, actorId: req.user.id, toStatus: "NEW", reason: "Application submitted." } });
+      return application;
     });
   } catch (error) { await removeUploadedFile(req.file); if (error.code === "P2002") req.flash("error", "You've already applied to this job."); else if (error instanceof AppError) req.flash("error", error.message); else throw error; return res.redirect(`/jobs/${job.id}`); }
   await sendApplicationEmails({ applicant: application, job, recruiter: job.recruiter });
@@ -50,3 +53,14 @@ export const handleApplyToJob = asyncHandler(async (req, res) => {
 
 export const downloadResume = asyncHandler(async (req, res) => { const application = await prisma.application.findFirst({ where: { id: req.params.applicationId, jobId: req.job.id } }); if (!application) throw new AppError("Application not found.", 404); const filename = path.basename(application.resumePath); return res.download(path.join(uploadsDir, filename), filename); });
 export const renderApplicants = asyncHandler(async (req, res) => { const job = await prisma.job.findUnique({ where: { id: req.job.id }, include: { applications: { orderBy: { createdAt: "desc" } } } }); res.render("jobs/applicants", { title: `Applicants — ${job.designation}`, job: mapJob(job), applicants: job.applications.map((a) => ({ ...a, applicantid: a.id, appliedAt: a.createdAt })) }); });
+
+export const updateApplicationStatus = asyncHandler(async (req, res) => {
+  await updateRecruiterApplication({
+    applicationId: req.params.applicationId,
+    recruiterId: req.user.id,
+    status: String(req.body.status || "").toUpperCase(),
+    recruiterNote: String(req.body.recruiterNote || "").trim(),
+  });
+  req.flash("success", "Application review updated.");
+  return res.redirect(`/jobs/${req.job.id}/applicants`);
+});

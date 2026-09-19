@@ -49,3 +49,39 @@ export const applyValidators = [
     .matches(/^[0-9+\-\s()]{7,20}$/)
     .withMessage("Enter a valid contact number."),
 ];
+
+export const recruiterReviewValidators = [
+  body("status")
+    .isIn(["NEW", "REVIEWING", "SHORTLISTED", "INTERVIEW_SCHEDULED", "INTERVIEWED", "HIRED", "REJECTED"])
+    .withMessage("Select a valid application status."),
+  body("recruiterNote")
+    .optional({ values: "falsy" })
+    .trim()
+    .isLength({ max: 2000 })
+    .withMessage("Recruiter notes must be 2,000 characters or fewer."),
+];
+
+export const interviewValidators = [
+  body("scheduledAt").isISO8601().withMessage("Enter a valid future interview time."),
+  body("timezone").trim().notEmpty().isLength({ max: 80 }).withMessage("Timezone is required."),
+  body("durationMinutes").isInt({ min: 15, max: 240 }).withMessage("Duration must be between 15 and 240 minutes."),
+  body("meetingUrl").optional({ values: "falsy" }).trim().isURL({ require_protocol: true }).withMessage("Enter a valid meeting URL."),
+  body("location").optional({ values: "falsy" }).trim().isLength({ max: 200 }),
+  body("candidateMessage").optional({ values: "falsy" }).trim().isLength({ max: 2000 }),
+];
+
+export const interviewUpdateValidators = [
+  body("status").isIn(["SCHEDULED", "RESCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]).withMessage("Select a valid interview status."),
+  body("scheduledAt").optional({ values: "falsy" }).isISO8601().withMessage("Enter a valid interview time."),
+  body("cancellationReason").optional({ values: "falsy" }).trim().isLength({ max: 500 }),
+];
+
+export const evaluationValidators = [
+  body("technicalScore").isInt({ min: 0, max: 100 }).withMessage("Technical score must be between 0 and 100."),
+  body("communicationScore").isInt({ min: 0, max: 100 }).withMessage("Communication score must be between 0 and 100."),
+  body("overallScore").isInt({ min: 0, max: 100 }).withMessage("Overall score must be between 0 and 100."),
+  body("recommendation").isIn(["STRONG_YES", "YES", "MAYBE", "NO"]).withMessage("Select a valid recommendation."),
+  body("strengths").optional({ values: "falsy" }).trim().isLength({ max: 2000 }),
+  body("concerns").optional({ values: "falsy" }).trim().isLength({ max: 2000 }),
+  body("privateFeedback").optional({ values: "falsy" }).trim().isLength({ max: 4000 }),
+];

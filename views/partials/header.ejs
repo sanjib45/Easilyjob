@@ -12,6 +12,12 @@
         <a href="/recruiter" class="nav-link <%= currentPath === '/recruiter' ? 'active' : '' %>">
           <%- icon('layers') %> Dashboard
         </a>
+        <a href="/recruiter/applicants" class="nav-link <%= currentPath.startsWith('/recruiter/applicants') ? 'active' : '' %>">
+          <%- icon('users') %> Applicants
+        </a>
+        <a href="/recruiter/interviews" class="nav-link <%= currentPath.startsWith('/recruiter/interviews') ? 'active' : '' %>">
+          <%- icon('calendar') %> Interviews
+        </a>
         <a href="/jobs/new" class="nav-link <%= currentPath === '/jobs/new' ? 'active' : '' %>">
           <%- icon('plus') %> Post a Job
         </a>

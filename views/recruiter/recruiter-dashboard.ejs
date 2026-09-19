@@ -37,6 +37,24 @@
       <div class="stat-label">Total applicants</div>
     </div>
   </div>
+  <div class="stat-card">
+    <span class="stat-icon" style="background: #fef2f2; color: #dc2626;">
+      <%- icon('check-circle') %>
+    </span>
+    <div>
+      <div class="stat-value"><%= stats.shortlisted %></div>
+      <div class="stat-label">Shortlisted</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon" style="background: #eff6ff; color: #2563eb;">
+      <%- icon('calendar') %>
+    </span>
+    <div>
+      <div class="stat-value"><%= stats.upcomingInterviews %></div>
+      <div class="stat-label">Upcoming interviews</div>
+    </div>
+  </div>
 </div>
 
 <% if (jobs.length === 0) { %>
@@ -73,7 +91,7 @@
             </td>
             <td><%= job.joblocation %></td>
             <td><%= job.openings %></td>
-            <td><a href="/jobs/<%= job.id %>/applicants"><%= job.applicants.length %></a></td>
+            <td><a href="/recruiter/applicants?jobId=<%= job.id %>"><%= job.applicants.length %></a></td>
             <td><%= formatDate(job.applyby) %></td>
             <td>
               <div class="card-actions">

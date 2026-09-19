@@ -71,6 +71,7 @@ async function runTests() {
   await new Promise((r) => setTimeout(r, 500));
   const home = await req("GET", "/");
   const publicUploadProbe = await req("GET", "/uploads/nonexistent-resume.pdf");
+  const unauthenticatedApplicants = await req("GET", "/recruiter/applicants");
   const loginPage = await req("GET", "/login");
   const csrfMatch = loginPage.body.match(/name="_csrf" value="([^"]+)"/);
   const csrf = csrfMatch ? csrfMatch[1] : "";
@@ -83,19 +84,34 @@ async function runTests() {
   );
   const authCookies = mergeCookies(loginCookies, getCookies(login.headers["set-cookie"]));
   const dash = await req("GET", "/recruiter", null, authCookies);
+  const applicants = await req("GET", "/recruiter/applicants", null, authCookies);
+  const filteredApplicants = await req("GET", "/recruiter/applicants?sort=status&status=SHORTLISTED&page=1&limit=10", null, authCookies);
+  const interviews = await req("GET", "/recruiter/interviews", null, authCookies);
   const result = {
     port: testPort,
     home: home.status,
     publicUploadProbe: publicUploadProbe.status,
+    unauthenticatedApplicants: unauthenticatedApplicants.status,
     login: login.status,
+    loginLocation: login.headers.location || null,
+    loginInvalidMessage: login.body.includes("Invalid email or password"),
+    csrfPresent: Boolean(csrf),
+    csrfCookiePresent: loginCookies.includes("csrf_token="),
     dashboard: dash.status,
+    applicants: applicants.status,
+    filteredApplicants: filteredApplicants.status,
+    interviews: interviews.status,
     dashboardLocation: dash.headers.location || null,
     hasAccessCookie: authCookies.includes("access_token="),
     ok:
       home.status === 200 &&
       publicUploadProbe.status === 404 &&
+      unauthenticatedApplicants.status === 302 &&
       login.status === 302 &&
       dash.status === 200 &&
+      applicants.status === 200 &&
+      filteredApplicants.status === 200 &&
+      interviews.status === 200 &&
       authCookies.includes("access_token="),
   };
   console.log(JSON.stringify(result, null, 2));

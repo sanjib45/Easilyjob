@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { renderAllJobs, renderNewJob, handleNewJob, renderJobDetails, renderUpdateJob, handleUpdateJob, handleDeleteJob, handleCloseJob, handleApplyToJob, downloadResume, renderApplicants } from "../controllers/job.controller.js";
+import { renderAllJobs, renderNewJob, handleNewJob, renderJobDetails, renderUpdateJob, handleUpdateJob, handleDeleteJob, handleCloseJob, handleApplyToJob, downloadResume, renderApplicants, updateApplicationStatus } from "../controllers/job.controller.js";
 import { isAuthenticated, requireEmailVerified, requireJobOwner } from "../middleware/auth.js";
 import { isRecruiter } from "../middleware/isRecruiter.js";
 import { upload } from "../middleware/upload.js";
 import { validate } from "../middleware/validate.js";
 import { applyLimiter } from "../middleware/rateLimit.js";
 import { verifyCsrfToken } from "../middleware/csrf.js";
-import { jobValidators, applyValidators } from "../validators/index.js";
+import { jobValidators, applyValidators, recruiterReviewValidators } from "../validators/index.js";
 
 const router = Router();
 router.get("/", renderAllJobs);
@@ -20,4 +20,5 @@ router.post("/:id/close", isAuthenticated, isRecruiter, requireEmailVerified, re
 router.post("/:id/apply", isAuthenticated, requireEmailVerified, applyLimiter, upload.single("resume"), verifyCsrfToken, applyValidators, validate((req) => `/jobs/${req.params.id}`), handleApplyToJob);
 router.get("/:id/applicants/:applicationId/resume", isAuthenticated, isRecruiter, requireEmailVerified, requireJobOwner, downloadResume);
 router.get("/:id/applicants", isAuthenticated, isRecruiter, requireEmailVerified, requireJobOwner, renderApplicants);
+router.post("/:id/applicants/:applicationId", isAuthenticated, isRecruiter, requireEmailVerified, requireJobOwner, verifyCsrfToken, recruiterReviewValidators, validate((req) => `/jobs/${req.params.id}/applicants`), updateApplicationStatus);
 export default router;
