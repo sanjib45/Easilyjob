@@ -1,0 +1,54 @@
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <span class="eyebrow">Candidate Portal</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Welcome back, <%= user.name %></h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">Track your active job applications, interview schedules, and saved roles.</p>
+  </div>
+</div>
+
+<div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+  <%- include('../partials/shell/stat-card', { statIcon: 'briefcase', statValue: stats.totalApplications, statLabel: 'Total Applications' }) %>
+  <%- include('../partials/shell/stat-card', { statIcon: 'check-circle', statValue: stats.shortlisted, statLabel: 'Shortlisted' }) %>
+  <%- include('../partials/shell/stat-card', { statIcon: 'calendar', statValue: stats.upcomingInterviewsCount, statLabel: 'Upcoming Interviews' }) %>
+  <%- include('../partials/shell/stat-card', { statIcon: 'bookmark', statValue: stats.savedJobsCount, statLabel: 'Saved Jobs' }) %>
+</div>
+
+<div class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; padding: 24px; margin-bottom: 28px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0;">Recent Applications</h2>
+    <a href="/applicant/applications" class="btn btn-secondary btn-sm">View all</a>
+  </div>
+
+  <% if (!applications || applications.length === 0) { %>
+    <%- include('../partials/shell/empty-state', { emptyIcon: 'inbox', emptyTitle: 'No applications yet', emptySubtitle: 'Explore open roles on the job board and submit your resume.' }) %>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Company</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Applied</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% applications.slice(0, 5).forEach(function (app) { %>
+            <tr>
+              <td style="font-weight: 600;"><%= app.job.designation %></td>
+              <td><%= app.job.companyName %></td>
+              <td><%= app.job.location %></td>
+              <td><span class="status-badge"><%= app.status.replaceAll('_', ' ') %></span></td>
+              <td><%= timeAgo(app.createdAt) %></td>
+              <td style="text-align: right;">
+                <a href="/applicant/applications/<%= app.id %>" class="btn btn-secondary btn-sm">Details</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>

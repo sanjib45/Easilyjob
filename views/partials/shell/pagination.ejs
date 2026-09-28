@@ -1,0 +1,15 @@
+<% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+  <div class="pagination-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-top: 24px;">
+    <div class="pagination-info" style="font-size: 0.85rem; color: var(--color-text-muted);">
+      Page <strong><%= currentPage %></strong> of <strong><%= totalPages %></strong>
+    </div>
+    <div class="pagination-actions" style="display: flex; gap: 8px;">
+      <% if (currentPage > 1) { %>
+        <a href="?page=<%= currentPage - 1 %>" class="btn btn-secondary btn-sm">Previous</a>
+      <% } %>
+      <% if (currentPage < totalPages) { %>
+        <a href="?page=<%= currentPage + 1 %>" class="btn btn-secondary btn-sm">Next</a>
+      <% } %>
+    </div>
+  </div>
+<% } %>

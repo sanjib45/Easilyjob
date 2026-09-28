@@ -3,7 +3,7 @@
   <h1>Edit job</h1>
   <p class="subtitle"><%= job.jobdesignation %> at <%= job.companyname %></p>
 
-  <form action="/jobs/<%= job.id %>/edit" method="POST" novalidate>
+  <form action="/jobs/<%= job.id %>/edit" method="POST" novalidate data-confirm data-confirm-title="Update Job Listing" data-confirm-message="Save changes to <%= job.jobdesignation %>?" data-confirm-action="Save Changes" data-confirm-variant="primary">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
     <div class="form-row">

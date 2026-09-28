@@ -1,0 +1,34 @@
+model Job {
+  id                   String    @id @default(cuid()) @map("_id")
+  category             String
+  designation          String
+  location             String
+  companyName          String
+  salary               String
+  salaryMin            Int?
+  salaryMax            Int?
+  salaryCurrency       String?   @default("INR")
+  salaryPeriod         String?   @default("LPA")
+  openings             Int
+  skills               String
+  applyBy              DateTime
+  status               String    @default("OPEN")
+  closedAt             DateTime?
+  publishedAt          DateTime?
+  applicationsAccepted Int       @default(0)
+  recruiterId          String
+  createdAt            DateTime? @default(now())
+  updatedAt            DateTime? @updatedAt
+
+  recruiter    User?         @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  applications Application[]
+  interviews   Interview[]
+  savedBy      SavedJob[]
+
+  @@index([recruiterId])
+  @@index([location])
+  @@index([category])
+  @@index([applyBy])
+  @@index([status, applyBy, createdAt])
+  @@index([recruiterId, status, createdAt])
+}

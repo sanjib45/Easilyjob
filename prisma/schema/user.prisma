@@ -1,0 +1,39 @@
+model User {
+  id            String    @id @default(cuid()) @map("_id")
+  name          String
+  email         String    @unique
+  passwordHash  String
+  /// APPLICANT | RECRUITER
+  role          String
+  emailVerified Boolean   @default(false)
+  verifyToken   String?
+  verifyExpires DateTime?
+  resetToken    String?
+  resetTokenExpires DateTime?
+  createdAt     DateTime? @default(now())
+  updatedAt     DateTime? @updatedAt
+
+  jobs                   Job[]
+  applications           Application[]
+  refreshTokens          RefreshToken[]
+  interviews             Interview[]
+  recruiterConversations Conversation[] @relation("RecruiterConversations")
+  applicantConversations Conversation[] @relation("ApplicantConversations")
+  messagesSent           Message[]
+  savedJobs              SavedJob[]
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid()) @map("_id")
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  userAgent String?
+  ip        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

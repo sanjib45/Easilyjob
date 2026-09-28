@@ -1,0 +1,39 @@
+<div class="sidebar-inner">
+  <div class="sidebar-brand">
+    <a href="<%= (user && String(user.role).toUpperCase() === 'RECRUITER') ? '/recruiter' : '/jobs' %>" class="sidebar-logo">
+      <span class="logo-mark"><%- icon('briefcase') %></span>
+      <div class="logo-text">
+        <span class="logo-title">Easily Jobs</span>
+        <span class="logo-badge"><%= navConfig ? navConfig.portalBadge : 'Job Portal' %></span>
+      </div>
+    </a>
+    <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar navigation">
+      <%- icon('x') %>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Sidebar navigation">
+    <% if (navConfig && navConfig.sections) { %>
+      <% navConfig.sections.forEach(function (section) { %>
+        <div class="nav-section-title"><%= section.title %></div>
+        <ul class="nav-list">
+          <% section.items.forEach(function (item) { %>
+            <li class="nav-item">
+              <a href="<%= item.href %>" class="nav-link <%= activeNavKey === item.key ? 'active' : '' %>">
+                <span class="nav-icon"><%- icon(item.icon) %></span>
+                <span class="nav-label"><%= item.label %></span>
+                <% if (item.badgeCount) { %>
+                  <span class="nav-badge-count"><%= item.badgeCount > 99 ? '99+' : item.badgeCount %></span>
+                <% } %>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      <% }) %>
+    <% } %>
+  </nav>
+
+  <div class="sidebar-footer">
+    <%- include('user-card') %>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { renderLogin, renderRegister, handleRegister, handleLogin, handleLogout, handleVerifyEmail, handleResendVerification } from "../controllers/user.controller.js";
+import { renderLogin, renderRegister, handleRegister, handleLogin, handleLogout, handleVerifyEmail, handleResendVerification, renderForgotPassword, handleForgotPassword, renderResetPassword, handleResetPassword } from "../controllers/user.controller.js";
 import { validate } from "../middleware/validate.js";
 import { isGuest, isAuthenticated } from "../middleware/auth.js";
 import { authLimiter } from "../middleware/rateLimit.js";
@@ -14,4 +14,10 @@ router.post("/register", isGuest, authLimiter, verifyCsrfToken, registerValidato
 router.post("/login", isGuest, authLimiter, verifyCsrfToken, loginValidators, validate("/login"), handleLogin);
 router.post("/logout", verifyCsrfToken, handleLogout);
 router.post("/resend-verification", isAuthenticated, verifyCsrfToken, handleResendVerification);
+
+router.get("/forgot-password", isGuest, renderForgotPassword);
+router.post("/forgot-password", isGuest, authLimiter, verifyCsrfToken, handleForgotPassword);
+router.get("/reset-password", isGuest, renderResetPassword);
+router.post("/reset-password", isGuest, authLimiter, verifyCsrfToken, handleResetPassword);
+
 export default router;

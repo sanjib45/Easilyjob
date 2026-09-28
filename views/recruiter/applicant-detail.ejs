@@ -1,130 +1,294 @@
-<a href="/jobs/<%= application.job.id %>/applicants" class="hint" style="display:inline-flex;align-items:center;gap:4px;margin-bottom:14px;">
-  <%- icon('arrow-left') %> Back to applicants
-</a>
-
-<div class="page-header">
-  <div>
-    <span class="eyebrow">Applicant review</span>
-    <h1><%= application.name %></h1>
-    <p class="subtitle"><%= application.job.designation %> at <%= application.job.companyName %></p>
-  </div>
-  <a href="/jobs/<%= application.job.id %>/applicants/<%= application.id %>/resume" class="btn btn-secondary">
-    <%- icon('file-text') %> Download resume
+<div style="margin-bottom: 16px;">
+  <a href="/recruiter/applicants" class="hint" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;color: var(--color-text-muted);">
+    <%- icon('arrow-left') %> Back to applicants list
   </a>
 </div>
 
-<div class="detail-grid">
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <span class="eyebrow">Candidate Review</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;"><%= application.name %></h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">
+      Applied for <strong><%= application.job.designation %></strong> at <strong><%= application.job.companyName %></strong>
+    </p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <% if (application.conversation) { %>
+      <a href="/messages/<%= application.conversation.id %>" class="btn btn-primary">
+        <%- icon('message-square') %> Direct Chat
+      </a>
+    <% } %>
+    <a href="/jobs/<%= application.job.id %>/applicants/<%= application.id %>/resume" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+      <%- icon('file-text') %> Download resume
+    </a>
+  </div>
+</div>
+
+<div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+  <!-- Candidate & Job info panel -->
   <section class="panel">
-    <div class="panel-header">
-      <h2>Application details</h2>
-      <span class="status-badge"><%= application.status %></span>
+    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Application Details</h2>
+      <span class="status-badge"><%= application.status.replaceAll("_", " ") %></span>
     </div>
-    <dl class="detail-list">
-      <div><dt>Name</dt><dd><%= application.name %></dd></div>
-      <div><dt>Email</dt><dd><a href="mailto:<%= application.email %>"><%= application.email %></a></dd></div>
-      <div><dt>Contact</dt><dd><%= application.contact %></dd></div>
-      <div><dt>Applied</dt><dd><%= formatDate(application.createdAt) %></dd></div>
-      <div><dt>Job</dt><dd><%= application.job.designation %></dd></div>
-      <div><dt>Company</dt><dd><%= application.job.companyName %></dd></div>
+    <dl class="detail-list" style="margin-top: 16px;">
+      <div>
+        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Full Name</dt>
+        <dd style="font-size: 0.95rem; font-weight: 600; color: var(--color-text);"><%= application.name %></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Email Address</dt>
+        <dd style="font-size: 0.95rem;"><a href="mailto:<%= application.email %>"><%= application.email %></a></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Contact Number</dt>
+        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= application.contact %></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Applied On</dt>
+        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= formatDate(application.createdAt) %></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Role</dt>
+        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= application.job.designation %></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Company</dt>
+        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= application.job.companyName %></dd>
+      </div>
     </dl>
   </section>
 
+  <!-- Recruiter Status & Note review -->
   <section class="panel">
     <div class="panel-header">
-      <h2>Recruiter review</h2>
+      <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Recruiter Review & Status</h2>
+      <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 2px 0 0;">Update the candidate's hiring stage and write private evaluation notes.</p>
     </div>
-    <form action="/recruiter/applicants/<%= application.id %>" method="POST">
+    <form action="/recruiter/applicants/<%= application.id %>" method="POST" style="margin-top: 16px;" data-confirm data-confirm-title="Update Candidate Stage" data-confirm-message="Are you sure you want to update <%= application.name %>'s application stage and review notes?" data-confirm-action="Update Stage" data-confirm-variant="primary">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-      <label for="status">Application status</label>
-      <select id="status" name="status" required>
-        <% ["NEW", "REVIEWING", "SHORTLISTED", "INTERVIEW_SCHEDULED", "INTERVIEWED", "HIRED", "REJECTED"].forEach(function (status) { %>
-          <option value="<%= status %>" <%= application.status === status ? "selected" : "" %>><%= status.replaceAll("_", " ") %></option>
-        <% }) %>
-      </select>
+      
+      <div style="margin-bottom: 14px;">
+        <label for="status" style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 6px;">Application Stage</label>
+        <select id="status" name="status" required style="width: 100%;">
+          <% [
+            ["NEW", "New"],
+            ["REVIEWING", "In Review"],
+            ["SHORTLISTED", "Shortlisted (notifies candidate)"],
+            ["INTERVIEW_SCHEDULED", "Interview Scheduled"],
+            ["INTERVIEWED", "Interviewed"],
+            ["HIRED", "Hired"],
+            ["REJECTED", "Rejected"]
+          ].forEach(function (pair) { %>
+            <option value="<%= pair[0] %>" <%= application.status === pair[0] ? "selected" : "" %>><%= pair[1] %></option>
+          <% }) %>
+        </select>
+      </div>
 
-      <label for="recruiterNote">Private recruiter note</label>
-      <textarea id="recruiterNote" name="recruiterNote" rows="6" maxlength="2000"><%= application.recruiterNote || "" %></textarea>
-      <button type="submit" class="btn btn-primary">Save review</button>
+      <div style="margin-bottom: 16px;">
+        <label for="recruiterNote" style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 6px;">
+          Private Recruiter Notes <span style="font-weight: normal; color: var(--color-text-subtle); font-size: 0.8rem;">(never visible to applicant)</span>
+        </label>
+        <textarea id="recruiterNote" name="recruiterNote" rows="5" maxlength="2000" placeholder="Enter notes on candidate background, screening comments, or salary expectations..." style="width: 100%;"><%= application.recruiterNote || "" %></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%;">
+        Save stage & review
+      </button>
     </form>
   </section>
 </div>
 
-<section class="panel">
+<!-- Schedule new interview panel -->
+<section class="panel" style="margin-bottom: 24px;">
   <div class="panel-header">
-    <h2>Schedule interview</h2>
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Schedule an Interview</h2>
+    <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 2px 0 0;">Set up an upcoming screening or technical round for this candidate.</p>
   </div>
-  <form action="/recruiter/applicants/<%= application.id %>/interviews" method="POST">
+  <form action="/recruiter/applicants/<%= application.id %>/interviews" method="POST" style="margin-top: 16px;" data-confirm data-confirm-title="Schedule Interview" data-confirm-message="Schedule an interview session for <%= application.name %>?" data-confirm-action="Schedule Interview" data-confirm-variant="primary">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-    <div class="form-grid">
-      <div><label for="scheduledAt">Date and time</label><input id="scheduledAt" type="datetime-local" name="scheduledAt" required /></div>
-      <div><label for="timezone">Timezone</label><input id="timezone" name="timezone" value="UTC" maxlength="80" required /></div>
-      <div><label for="durationMinutes">Duration (minutes)</label><input id="durationMinutes" type="number" name="durationMinutes" value="60" min="15" max="240" required /></div>
-      <div><label for="meetingUrl">Meeting URL</label><input id="meetingUrl" type="url" name="meetingUrl" placeholder="https://..." /></div>
-      <div><label for="location">Location</label><input id="location" name="location" maxlength="200" /></div>
+    <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+      <div>
+        <label for="scheduledAt" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Date and Time</label>
+        <input id="scheduledAt" type="datetime-local" name="scheduledAt" required style="width: 100%;" />
+      </div>
+      <div>
+        <label for="timezone" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Timezone</label>
+        <input id="timezone" name="timezone" value="UTC" maxlength="80" required style="width: 100%;" />
+      </div>
+      <div>
+        <label for="durationMinutes" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Duration (minutes)</label>
+        <input id="durationMinutes" type="number" name="durationMinutes" value="60" min="15" max="240" required style="width: 100%;" />
+      </div>
+      <div>
+        <label for="meetingUrl" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Meeting URL</label>
+        <input id="meetingUrl" type="url" name="meetingUrl" placeholder="https://meet.google.com/..." style="width: 100%;" />
+      </div>
+      <div>
+        <label for="location" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Physical Location (optional)</label>
+        <input id="location" name="location" maxlength="200" placeholder="e.g. Headquarters Conference Room 3" style="width: 100%;" />
+      </div>
     </div>
-    <label for="candidateMessage">Message to applicant</label>
-    <textarea id="candidateMessage" name="candidateMessage" rows="3" maxlength="2000"></textarea>
-    <button type="submit" class="btn btn-primary">Schedule interview</button>
+    <div style="margin-bottom: 16px;">
+      <label for="candidateMessage" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Message to Candidate</label>
+      <textarea id="candidateMessage" name="candidateMessage" rows="2" maxlength="2000" placeholder="Instructions, agenda, or prerequisites for the candidate..." style="width: 100%;"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">
+      <%- icon('calendar') %> Schedule interview round
+    </button>
   </form>
 </section>
 
+<!-- Interview rounds list & evaluations -->
 <% if (application.interviews.length > 0) { %>
-  <section class="panel">
-    <div class="panel-header"><h2>Interview history</h2></div>
-    <% application.interviews.forEach(function (interview) { %>
-      <div class="interview-block">
-        <p><strong><%= formatDate(interview.scheduledAt) %></strong> · <%= interview.timezone %> · <%= interview.status.replaceAll("_", " ") %></p>
-        <% if (interview.meetingUrl) { %><p><a href="<%= interview.meetingUrl %>" target="_blank" rel="noopener noreferrer">Open meeting link</a></p><% } %>
-        <form action="/recruiter/interviews/<%= interview.id %>" method="POST">
+  <section class="panel" style="margin-bottom: 24px;">
+    <div class="panel-header">
+      <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Interview Rounds & Evaluations</h2>
+      <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 2px 0 0;">Manage round outcomes, score performances, and share final decisions.</p>
+    </div>
+
+    <% application.interviews.forEach(function (interview, idx) { %>
+      <div style="background: var(--color-bg); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; margin-top: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+          <div>
+            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-600);">Round <%= application.interviews.length - idx %></span>
+            <h3 style="font-size: 1.05rem; font-weight: 700; margin: 2px 0 4px;">
+              <%= formatDate(interview.scheduledAt) %> <span style="font-weight: normal; color: var(--color-text-muted); font-size: 0.9rem;">(<%= interview.timezone %>, <%= interview.durationMinutes %>m)</span>
+            </h3>
+            <% if (interview.meetingUrl) { %>
+              <a href="<%= interview.meetingUrl %>" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                <%- icon('video') %> Open meeting link
+              </a>
+            <% } %>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="status-badge"><%= interview.status.replaceAll("_", " ") %></span>
+          </div>
+        </div>
+
+        <!-- Update interview status -->
+        <form action="/recruiter/interviews/<%= interview.id %>" method="POST" style="display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap;">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-          <select name="status" aria-label="Interview status">
+          <select name="status" aria-label="Interview status" style="font-size: 0.88rem; padding: 6px 10px;">
             <% ["SCHEDULED", "RESCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"].forEach(function (status) { %>
               <option value="<%= status %>" <%= interview.status === status ? "selected" : "" %>><%= status.replaceAll("_", " ") %></option>
             <% }) %>
           </select>
-          <input type="text" name="cancellationReason" value="<%= interview.cancellationReason || "" %>" maxlength="500" placeholder="Cancellation reason" />
-          <button type="submit" class="btn btn-secondary btn-sm">Update interview</button>
+          <input type="text" name="cancellationReason" value="<%= interview.cancellationReason || "" %>" maxlength="500" placeholder="Reason (if rescheduling or cancelling)" style="flex: 1; min-width: 180px; font-size: 0.88rem; padding: 6px 10px;" />
+          <button type="submit" class="btn btn-secondary btn-sm">Update status</button>
         </form>
-        <form action="/recruiter/interviews/<%= interview.id %>/evaluation" method="POST">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-          <input type="number" name="technicalScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.technicalScore : "" %>" placeholder="Technical" required />
-          <input type="number" name="communicationScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.communicationScore : "" %>" placeholder="Communication" required />
-          <input type="number" name="overallScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.overallScore : "" %>" placeholder="Overall" required />
-          <select name="recommendation" required>
-            <% ["STRONG_YES", "YES", "MAYBE", "NO"].forEach(function (recommendation) { %>
-              <option value="<%= recommendation %>" <%= interview.evaluation && interview.evaluation.recommendation === recommendation ? "selected" : "" %>><%= recommendation.replaceAll("_", " ") %></option>
-            <% }) %>
-          </select>
-          <textarea name="privateFeedback" rows="2" maxlength="4000" placeholder="Private evaluation feedback"><%= interview.evaluation ? interview.evaluation.privateFeedback || "" : "" %></textarea>
-          <button type="submit" class="btn btn-primary btn-sm">Save evaluation</button>
-        </form>
+
+        <!-- Private evaluation form -->
+        <div style="background: var(--color-surface); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 14px;">
+          <h4 style="font-size: 0.92rem; font-weight: 700; margin: 0 0 12px; color: var(--color-text);">
+            Private Interviewer Evaluation <span style="font-weight: normal; color: var(--color-text-subtle); font-size: 0.78rem;">(recruiter-only)</span>
+          </h4>
+          <form action="/recruiter/interviews/<%= interview.id %>/evaluation" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <div class="score-grid">
+              <div class="score-field">
+                <label for="eval-tech-<%= interview.id %>">Technical (0-100)</label>
+                <input id="eval-tech-<%= interview.id %>" type="number" name="technicalScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.technicalScore : "" %>" placeholder="e.g. 85" required style="width:100%;" />
+              </div>
+              <div class="score-field">
+                <label for="eval-comm-<%= interview.id %>">Communication (0-100)</label>
+                <input id="eval-comm-<%= interview.id %>" type="number" name="communicationScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.communicationScore : "" %>" placeholder="e.g. 90" required style="width:100%;" />
+              </div>
+              <div class="score-field">
+                <label for="eval-over-<%= interview.id %>">Overall Score (0-100)</label>
+                <input id="eval-over-<%= interview.id %>" type="number" name="overallScore" min="0" max="100" value="<%= interview.evaluation ? interview.evaluation.overallScore : "" %>" placeholder="e.g. 88" required style="width:100%;" />
+              </div>
+              <div class="score-field">
+                <label for="eval-rec-<%= interview.id %>">Recommendation</label>
+                <select id="eval-rec-<%= interview.id %>" name="recommendation" required style="width:100%;">
+                  <% [["STRONG_YES", "Strong Yes"], ["YES", "Yes"], ["MAYBE", "Maybe"], ["NO", "No"]].forEach(function (rec) { %>
+                    <option value="<%= rec[0] %>" <%= interview.evaluation && interview.evaluation.recommendation === rec[0] ? "selected" : "" %>><%= rec[1] %></option>
+                  <% }) %>
+                </select>
+              </div>
+            </div>
+
+            <div class="feedback-grid">
+              <div>
+                <label for="eval-str-<%= interview.id %>" style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Candidate Strengths</label>
+                <textarea id="eval-str-<%= interview.id %>" name="strengths" rows="2" maxlength="3000" placeholder="Key strengths observed..." style="width: 100%;"><%= interview.evaluation ? interview.evaluation.strengths || "" : "" %></textarea>
+              </div>
+              <div>
+                <label for="eval-con-<%= interview.id %>" style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Areas of Concern</label>
+                <textarea id="eval-con-<%= interview.id %>" name="concerns" rows="2" maxlength="3000" placeholder="Potential gaps or questions for next rounds..." style="width: 100%;"><%= interview.evaluation ? interview.evaluation.concerns || "" : "" %></textarea>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <label for="eval-priv-<%= interview.id %>" style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); display: block; margin-bottom: 4px;">Private Notes</label>
+              <textarea id="eval-priv-<%= interview.id %>" name="privateFeedback" rows="2" maxlength="4000" placeholder="Internal evaluation comments..." style="width: 100%;"><%= interview.evaluation ? interview.evaluation.privateFeedback || "" : "" %></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-sm">
+              Save private evaluation
+            </button>
+          </form>
+        </div>
+
+        <!-- Shared Result Status or CTA -->
+        <% if (interview.result) { %>
+          <div class="share-result-box">
+            <div class="share-result-title">
+              <%- icon('check-circle') %> Interview Result Shared with Candidate
+            </div>
+            <div class="share-result-desc">
+              Decision: <strong><%= interview.result.outcome %></strong> · Shared on <%= formatDate(interview.result.sharedAt) %>
+            </div>
+            <div style="background: var(--color-surface); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.88rem; color: var(--color-text);">
+              "<%= interview.result.summary %>"
+            </div>
+          </div>
+        <% } else if (interview.status === "COMPLETED") { %>
+          <div class="share-result-box" style="background: var(--brand-50); border-color: var(--brand-200);">
+            <div class="share-result-title">
+              <%- icon('send') %> Ready to Share Result
+            </div>
+            <div class="share-result-desc">
+              This interview is marked Completed. You can send a public-safe outcome and summary email to the candidate.
+            </div>
+            <a href="/recruiter/interviews/<%= interview.id %>/share-result" class="btn btn-primary btn-sm">
+              Share result with candidate
+            </a>
+          </div>
+        <% } %>
       </div>
     <% }) %>
   </section>
 <% } %>
 
+<!-- Status History Timeline -->
 <section class="panel">
   <div class="panel-header">
-    <h2>Status history</h2>
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Status Transition Timeline</h2>
+    <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 2px 0 0;">Audit trail of all status updates and transitions for this application.</p>
   </div>
   <% if (application.statusHistory.length === 0) { %>
-    <p class="hint">No status changes recorded yet.</p>
+    <p class="hint" style="margin-top: 14px;">No status changes recorded yet.</p>
   <% } else { %>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>From</th><th>To</th><th>Changed</th></tr>
-        </thead>
-        <tbody>
-          <% application.statusHistory.forEach(function (entry) { %>
-            <tr>
-              <td><%= entry.fromStatus || "Created" %></td>
-              <td><%= entry.toStatus %></td>
-              <td><%= formatDate(entry.createdAt) %></td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
+    <div class="timeline">
+      <% application.statusHistory.forEach(function (entry) { %>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-header">
+            <span class="timeline-status">
+              <% if (entry.fromStatus) { %>
+                <%= entry.fromStatus.replaceAll("_", " ") %> → <strong><%= entry.toStatus.replaceAll("_", " ") %></strong>
+              <% } else { %>
+                Application Created (<%= entry.toStatus %>)
+              <% } %>
+            </span>
+            <span class="timeline-date"><%= formatDate(entry.createdAt) %></span>
+          </div>
+          <% if (entry.reason) { %>
+            <div class="timeline-reason"><%= entry.reason %></div>
+          <% } %>
+        </div>
+      <% }) %>
     </div>
   <% } %>
 </section>

@@ -1,0 +1,41 @@
+model Application {
+  id              String   @id @default(cuid()) @map("_id")
+  jobId           String
+  applicantId     String?
+  name            String
+  email           String
+  contact         String
+  resumePath      String
+  status          String    @default("NEW")
+  recruiterNote   String?
+  statusUpdatedAt DateTime? @default(now())
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @updatedAt
+
+  job           Job                        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicant     User?                      @relation(fields: [applicantId], references: [id], onDelete: SetNull)
+  statusHistory ApplicationStatusHistory[]
+  interviews    Interview[]
+  conversation  Conversation?
+
+  @@unique([jobId, email])
+  @@index([applicantId])
+  @@index([jobId, createdAt])
+  @@index([applicantId, createdAt])
+  @@index([jobId, status, createdAt])
+}
+
+model ApplicationStatusHistory {
+  id            String   @id @default(cuid()) @map("_id")
+  applicationId String
+  actorId       String
+  fromStatus    String?
+  toStatus      String
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, createdAt])
+  @@index([actorId, createdAt])
+}

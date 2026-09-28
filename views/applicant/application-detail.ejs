@@ -1,0 +1,83 @@
+<div style="margin-bottom: 16px;">
+  <a href="/applicant/applications" class="hint" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;color:var(--color-text-muted);">
+    <%- icon('arrow-left') %> Back to my applications
+  </a>
+</div>
+
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <span class="eyebrow">Candidate Portal</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;"><%= application.job.designation %></h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);"><%= application.job.companyName %> &middot; <%= application.job.location %></p>
+  </div>
+  <div>
+    <span class="status-badge" style="font-size: 0.9rem; padding: 6px 14px;"><%= application.status.replaceAll('_', ' ') %></span>
+  </div>
+</div>
+
+<div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+  <section class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; padding: 24px;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 16px;">Application Overview</h2>
+    <dl style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0;">
+      <div>
+        <dt style="font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase;">Applicant</dt>
+        <dd style="font-size: 0.95rem; font-weight: 600; margin: 2px 0 0;"><%= application.name %></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase;">Submitted Date</dt>
+        <dd style="font-size: 0.95rem; margin: 2px 0 0;"><%= formatDate(application.createdAt) %></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase;">Current Status</dt>
+        <dd style="font-size: 0.95rem; font-weight: 600; margin: 2px 0 0;"><%= application.status.replaceAll('_', ' ') %></dd>
+      </div>
+      <div>
+        <dt style="font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase;">Salary Range</dt>
+        <dd style="font-size: 0.95rem; margin: 2px 0 0; color: var(--brand-primary); font-weight: 600;"><%= application.job.salary %></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; padding: 24px;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 16px;">Status Progress Timeline</h2>
+    <ul class="timeline" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px;">
+      <% application.statusHistory.forEach(function (history) { %>
+        <li style="display: flex; gap: 12px; align-items: flex-start;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--brand-primary); margin-top: 6px; flex-shrink: 0;"></span>
+          <div>
+            <div style="font-weight: 600; font-size: 0.92rem;"><%= history.toStatus.replaceAll('_', ' ') %></div>
+            <div style="font-size: 0.78rem; color: var(--color-text-muted);"><%= formatDate(history.createdAt) %></div>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+</div>
+
+<% if (application.interviews && application.interviews.length > 0) { %>
+  <section class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0 0 16px;">Scheduled Interview Rounds</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <% application.interviews.forEach(function (round) { %>
+        <div style="border: 1px solid var(--color-border); border-radius: 12px; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 700;"><%= round.roundName || 'Interview Round' %></h3>
+            <span class="status-badge"><%= round.status.replaceAll('_', ' ') %></span>
+          </div>
+          <p style="margin: 0 0 8px; font-size: 0.88rem; color: var(--color-text-muted);">
+            <%- icon('calendar') %> <%= formatDate(round.scheduledAt) %> (<%= round.durationMinutes %> min)
+          </p>
+          <% if (round.meetingUrl) { %>
+            <a href="<%= round.meetingUrl %>" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">Join Meeting</a>
+          <% } %>
+          <% if (round.result) { %>
+            <div style="margin-top: 12px; padding: 12px; background: rgba(13, 148, 136, 0.08); border-radius: 10px;">
+              <strong style="color: var(--brand-primary); font-size: 0.9rem;">Shared Result: <%= round.result.outcome %></strong>
+              <p style="margin: 4px 0 0; font-size: 0.85rem;"><%= round.result.summary %></p>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  </section>
+<% } %>

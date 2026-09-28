@@ -1,0 +1,14 @@
+<% if (user) { %>
+  <div class="sidebar-profile">
+    <span class="avatar-sm" style="background: <%= colorForName(user.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center;">
+      <%= initialsFor(user.name) %>
+    </span>
+    <div class="profile-meta">
+      <div class="profile-name" title="<%= user.name %>"><%= user.name %></div>
+      <div class="profile-email" title="<%= user.email %>"><%= user.email %></div>
+    </div>
+    <% if (user.emailVerified) { %>
+      <span class="verified-dot" title="Verified Account" aria-label="Verified Account"><%- icon('check-circle') %></span>
+    <% } %>
+  </div>
+<% } %>

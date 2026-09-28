@@ -1,0 +1,65 @@
+model Interview {
+  id                 String   @id @default(cuid()) @map("_id")
+  applicationId      String
+  jobId              String
+  recruiterId        String
+  scheduledAt        DateTime
+  timezone           String
+  durationMinutes    Int      @default(60)
+  meetingUrl         String?
+  location           String?
+  candidateMessage   String?
+  status             String   @default("SCHEDULED")
+  cancellationReason String?
+  createdAt          DateTime? @default(now())
+  updatedAt          DateTime? @updatedAt
+
+  application Application          @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  job         Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  recruiter   User                 @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  evaluation  InterviewEvaluation?
+  result      InterviewResult?
+
+  @@index([recruiterId, scheduledAt, status])
+  @@index([recruiterId, status, scheduledAt])
+  @@index([recruiterId, createdAt])
+  @@index([applicationId, scheduledAt])
+  @@index([jobId, scheduledAt])
+}
+
+model InterviewEvaluation {
+  id                  String   @id @default(cuid()) @map("_id")
+  interviewId         String   @unique
+  applicationId       String
+  recruiterId         String
+  technicalScore      Int
+  communicationScore  Int
+  overallScore        Int
+  recommendation      String
+  strengths           String?
+  concerns            String?
+  privateFeedback     String?
+  createdAt           DateTime? @default(now())
+  updatedAt           DateTime? @updatedAt
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@index([recruiterId, createdAt])
+  @@index([applicationId, createdAt])
+}
+
+model InterviewResult {
+  id             String   @id @default(cuid()) @map("_id")
+  interviewId    String   @unique
+  applicationId  String
+  recruiterId    String
+  summary        String
+  outcome        String   // HIRED | REJECTED | ON_HOLD
+  sharedAt       DateTime @default(now())
+  emailOutboxKey String?
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([recruiterId, sharedAt])
+}
