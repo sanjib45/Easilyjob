@@ -1,37 +1,156 @@
-<div class="page-header">
-  <div>
-    <span class="eyebrow">Real-Time Messaging</span>
-    <h1>Direct Messages</h1>
-    <p class="subtitle">Chat directly with applicants and recruiters about active job postings.</p>
-  </div>
-</div>
+<style>
+  /* ── Conversations Inbox ───────────────────────── */
+  .inbox-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .inbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .inbox-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.18s;
+    position: relative;
+    overflow: hidden;
+  }
+  .inbox-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, #0e74d6, #0d9488);
+    opacity: 0;
+    transition: opacity 0.18s;
+    border-radius: 4px 0 0 4px;
+  }
+  .inbox-card:hover {
+    border-color: var(--brand-500, #0e74d6);
+    box-shadow: 0 4px 18px rgba(14,116,214,0.14);
+    transform: translateY(-2px);
+  }
+  .inbox-card:hover::before { opacity: 1; }
 
-<% if (!conversations || conversations.length === 0) { %>
-  <div class="empty-state">
-    <%- icon('message-square', 'icon-xl') %>
-    <h3>No active conversations</h3>
-    <p>Conversations will automatically start when an applicant applies or contact is initiated.</p>
+  .inbox-avatar {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; font-weight: 800; color: #fff;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .inbox-unread-dot {
+    position: absolute; top: -3px; right: -3px;
+    width: 12px; height: 12px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 2px solid var(--color-bg-surface);
+  }
+
+  .inbox-body { flex: 1; min-width: 0; }
+  .inbox-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  .inbox-name {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .inbox-time {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+  .inbox-role {
+    font-size: 0.78rem;
+    color: var(--brand-600, #0e74d6);
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .inbox-preview {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .inbox-arrow {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    transition: transform 0.18s;
+  }
+  .inbox-card:hover .inbox-arrow { transform: translateX(4px); color: var(--brand-600, #0e74d6); }
+</style>
+
+<div class="inbox-wrap">
+  <div class="page-header" style="margin-bottom: 24px;">
+    <div>
+      <span class="eyebrow">Real-Time Messaging</span>
+      <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Direct Messages</h1>
+      <p class="subtitle" style="margin:0; color:var(--color-text-muted);">Chat directly with applicants and recruiters about active job postings.</p>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <% if (conversations && conversations.length > 0) { %>
+        <span class="badge-counter"><%= conversations.length %></span>
+      <% } %>
+    </div>
   </div>
-<% } else { %>
-  <div class="chat-conversations-list">
-    <% conversations.forEach(function (conv) { %>
-      <% var other = conv.recruiterId === user.id ? conv.applicant : conv.recruiter; %>
-      <a href="/messages/<%= conv.id %>" class="chat-conv-card">
-        <span class="avatar-sm" style="background: <%= colorForName(other.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; font-size:1.1rem; border-radius:12px;">
-          <%= initialsFor(other.name) %>
-        </span>
-        <div class="conv-info">
-          <div class="conv-header">
-            <span class="conv-name"><%= other.name %></span>
-            <span class="conv-time"><%= timeAgo(conv.lastMessageAt) %></span>
+
+  <% if (!conversations || conversations.length === 0) { %>
+    <div class="empty-state" style="text-align:center; padding: 80px 20px; color:var(--color-text-muted);">
+      <div style="font-size:3.5rem; margin-bottom:16px;">💬</div>
+      <h3 style="font-size:1.2rem; font-weight:700; margin:0 0 8px;">No conversations yet</h3>
+      <p style="margin:0; font-size:0.9rem;">Conversations start automatically when an interview is scheduled or an applicant connects.</p>
+    </div>
+  <% } else { %>
+    <div class="inbox-list">
+      <% conversations.forEach(function(conv) {
+        var other = conv.recruiterId === user.id ? conv.applicant : conv.recruiter;
+        var preview = conv.lastMessage || 'No messages yet.';
+        var isSystemPreview = preview.startsWith('📅') || preview.includes('Interview Scheduled');
+        var timeStr = conv.lastMessageAt ? timeAgo(conv.lastMessageAt) : '';
+      %>
+        <a href="/messages/<%= conv.id %>" class="inbox-card">
+          <div class="inbox-avatar" style="background:<%= colorForName(other.name) %>;">
+            <%= initialsFor(other.name) %>
           </div>
-          <div class="conv-meta">
-            <span class="conv-role"><%= conv.application?.job?.designation || 'Job Posting' %></span>
-            &middot; <%= conv.application?.job?.companyName || '' %>
+          <div class="inbox-body">
+            <div class="inbox-top">
+              <span class="inbox-name"><%= other.name %></span>
+              <span class="inbox-time"><%= timeStr %></span>
+            </div>
+            <div class="inbox-role">
+              <%= conv.application?.job?.designation || 'Direct Message' %>
+              <% if (conv.application?.job?.companyName) { %>&middot; <%= conv.application.job.companyName %><% } %>
+            </div>
+            <p class="inbox-preview">
+              <% if (isSystemPreview) { %>📋 Interview update<% } else { %><%= preview %><% } %>
+            </p>
           </div>
-          <p class="conv-preview"><%= conv.lastMessage || 'No messages yet.' %></p>
-        </div>
-      </a>
-    <% }) %>
-  </div>
-<% } %>
+          <div class="inbox-arrow">
+            <%- icon('chevron-right') %>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
+</div>

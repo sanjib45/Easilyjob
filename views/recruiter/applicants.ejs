@@ -1,59 +1,114 @@
-<% const pageParams = (page) => new URLSearchParams({ q: filters.search || "", status: filters.status || "", jobId: filters.jobId || "", sort: filters.sort || "newest", limit: String(pagination.limit), page: String(page) }).toString(); %>
-<% const hasActiveFilters = Boolean(filters.search || filters.status || filters.jobId || (filters.sort && filters.sort !== "newest")); %>
+<%
+  const currentView = typeof viewMode !== 'undefined' ? viewMode : 'table';
+  const pageParams = (page) => new URLSearchParams({
+    view: currentView,
+    q: filters.search || "",
+    status: filters.status || "",
+    jobId: filters.jobId || "",
+    sort: filters.sort || "newest",
+    limit: String(pagination.limit),
+    page: String(page)
+  }).toString();
 
-<div class="page-header" style="margin-bottom: 24px;">
+  const filterUrl = (overrides = {}) => {
+    const params = new URLSearchParams({
+      view: currentView,
+      q: filters.search || "",
+      status: filters.status || "",
+      jobId: filters.jobId || "",
+      sort: filters.sort || "newest",
+      ...overrides
+    });
+    // Clean up empty params
+    [...params.entries()].forEach(([k, v]) => { if (!v) params.delete(k); });
+    return `/recruiter/applicants?${params.toString()}`;
+  };
+
+  const hasActiveFilters = Boolean(filters.search || filters.status || filters.jobId || (filters.sort && filters.sort !== "newest"));
+%>
+
+<div class="page-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
   <div>
-    <span class="eyebrow">Recruiter workspace</span>
-    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Applicants</h1>
+    <span class="eyebrow">Recruiter Workspace</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">
+      <%= currentView === 'pipeline' ? 'ATS Candidate Pipeline' : 'Applicants Management' %>
+    </h1>
     <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">
-      <%= pagination.total %> candidate application<%= pagination.total === 1 ? "" : "s" %> across your listings.
+      <%= pagination.total %> candidate application<%= pagination.total === 1 ? "" : "s" %> across your active job postings.
     </p>
+  </div>
+
+  <!-- ── View Mode Switcher ── -->
+  <div style="display: flex; gap: 6px; background: var(--color-bg); padding: 4px; border-radius: 10px; border: 1px solid var(--color-border);">
+    <a href="<%= filterUrl({ view: 'table' }) %>" 
+       class="btn btn-sm <%= currentView === 'table' ? 'btn-primary' : 'btn-ghost' %>" 
+       style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+      <%- icon('layers') %> Table View
+    </a>
+    <a href="<%= filterUrl({ view: 'pipeline' }) %>" 
+       class="btn btn-sm <%= currentView === 'pipeline' ? 'btn-primary' : 'btn-ghost' %>" 
+       style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+      <%- icon('briefcase') %> Kanban Pipeline
+    </a>
   </div>
 </div>
 
-<section class="panel" style="margin-bottom: 24px;">
-  <form method="GET" action="/recruiter/applicants" class="filter-row">
-    <input type="search" name="q" value="<%= filters.search %>" placeholder="Search by name, email, or designation..." style="flex: 1.5;" />
+<!-- ── Search & Filter Panel ── -->
+<section class="panel" style="margin-bottom: 24px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 14px; padding: 18px;">
+  <form method="GET" action="/recruiter/applicants" class="filter-row" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+    <input type="hidden" name="view" value="<%= currentView %>" />
+
+    <div style="flex: 1.5; min-width: 200px;">
+      <input type="search" name="q" value="<%= filters.search %>" placeholder="Search by name, email, or designation..." style="width: 100%; box-sizing: border-box;" />
+    </div>
     
-    <select name="jobId" aria-label="Filter by job" style="flex: 1;">
-      <option value="">All job postings</option>
-      <% jobs.forEach(function (job) { %>
-        <option value="<%= job.id %>" <%= filters.jobId === job.id ? "selected" : "" %>><%= job.designation %></option>
-      <% }) %>
-    </select>
+    <div style="flex: 1; min-width: 160px;">
+      <select name="jobId" aria-label="Filter by job" style="width: 100%; box-sizing: border-box;">
+        <option value="">All job postings</option>
+        <% jobs.forEach(function (job) { %>
+          <option value="<%= job.id %>" <%= filters.jobId === job.id ? "selected" : "" %>><%= job.designation %></option>
+        <% }) %>
+      </select>
+    </div>
 
-    <select name="status" aria-label="Filter by application status" style="flex: 1;">
-      <option value="">All statuses</option>
-      <% [
-        ["NEW", "New"],
-        ["REVIEWING", "In Review"],
-        ["SHORTLISTED", "Shortlisted"],
-        ["INTERVIEW_SCHEDULED", "Interview Scheduled"],
-        ["INTERVIEWED", "Interviewed"],
-        ["HIRED", "Hired"],
-        ["REJECTED", "Rejected"]
-      ].forEach(function (pair) { %>
-        <option value="<%= pair[0] %>" <%= filters.status === pair[0] ? "selected" : "" %>><%= pair[1] %></option>
-      <% }) %>
-    </select>
+    <% if (currentView !== 'pipeline') { %>
+      <div style="flex: 1; min-width: 140px;">
+        <select name="status" aria-label="Filter by application status" style="width: 100%; box-sizing: border-box;">
+          <option value="">All statuses</option>
+          <% [
+            ["NEW", "New (Applied)"],
+            ["REVIEWING", "In Review"],
+            ["SHORTLISTED", "Shortlisted"],
+            ["INTERVIEW_SCHEDULED", "Interview Scheduled"],
+            ["INTERVIEWED", "Interviewed"],
+            ["HIRED", "Hired"],
+            ["REJECTED", "Rejected"]
+          ].forEach(function (pair) { %>
+            <option value="<%= pair[0] %>" <%= filters.status === pair[0] ? "selected" : "" %>><%= pair[1] %></option>
+          <% }) %>
+        </select>
+      </div>
+    <% } %>
 
-    <select name="sort" aria-label="Sort applications" style="flex: 0.8;">
-      <% [
-        ["newest", "Newest first"],
-        ["oldest", "Oldest first"],
-        ["applicant", "Candidate name"],
-        ["status", "Status order"]
-      ].forEach(function (option) { %>
-        <option value="<%= option[0] %>" <%= filters.sort === option[0] ? "selected" : "" %>><%= option[1] %></option>
-      <% }) %>
-    </select>
+    <div style="flex: 0.8; min-width: 130px;">
+      <select name="sort" aria-label="Sort applications" style="width: 100%; box-sizing: border-box;">
+        <% [
+          ["newest", "Newest first"],
+          ["oldest", "Oldest first"],
+          ["applicant", "Candidate name"],
+          ["status", "Status order"]
+        ].forEach(function (option) { %>
+          <option value="<%= option[0] %>" <%= filters.sort === option[0] ? "selected" : "" %>><%= option[1] %></option>
+        <% }) %>
+      </select>
+    </div>
 
-    <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+    <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
       <%- icon('search') %> Filter
     </button>
 
     <% if (hasActiveFilters) { %>
-      <a href="/recruiter/applicants" class="btn btn-secondary" style="white-space: nowrap;">
+      <a href="/recruiter/applicants?view=<%= currentView %>" class="btn btn-secondary btn-sm" style="white-space: nowrap;">
         Reset
       </a>
     <% } %>
@@ -61,78 +116,269 @@
 </section>
 
 <% if (applications.length === 0) { %>
-  <div class="empty-state" style="padding: 48px 24px;">
+  <div class="empty-state" style="padding: 48px 24px; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; text-align: center;">
     <%- icon('users', 'icon-xl') %>
-    <h3>No matching applications found</h3>
-    <p>Try adjusting your search criteria or filter selections to view candidates.</p>
+    <h3 style="margin: 14px 0 6px;">No candidate applications found</h3>
+    <p style="color: var(--color-text-muted); margin: 0 0 16px;">Try adjusting your search query, clearing filters, or checking back later.</p>
     <% if (hasActiveFilters) { %>
-      <a href="/recruiter/applicants" class="btn btn-secondary btn-sm" style="margin-top: 12px;">Clear all filters</a>
+      <a href="/recruiter/applicants?view=<%= currentView %>" class="btn btn-secondary btn-sm">Clear all filters</a>
     <% } %>
   </div>
-<% } else { %>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Candidate</th>
-          <th>Applied For</th>
-          <th>Applied Date</th>
-          <th>Current Status</th>
-          <th style="text-align: right;">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% applications.forEach(function (application) { %>
-          <tr>
-            <td>
-              <div class="cell-user">
-                <span class="avatar-sm" style="background: <%= colorForName(application.name) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">
-                  <%= initialsFor(application.name) %>
-                </span>
-                <div>
-                  <div class="name" style="font-weight: 600;"><%= application.name %></div>
-                  <div class="sub"><%= application.email %></div>
+<% } else if (currentView === 'pipeline') { %>
+
+  <!-- ── ATS Kanban Pipeline Board ── -->
+  <div class="kanban-board" style="display: grid; grid-template-columns: repeat(6, minmax(280px, 1fr)); gap: 16px; overflow-x: auto; padding-bottom: 24px;">
+    
+    <!-- Helper macro for Kanban Column -->
+    <% 
+      const columns = [
+        { key: 'NEW', title: 'New Applied', icon: 'inbox', badgeColor: '#3b82f6', items: pipelineGroups.NEW || [] },
+        { key: 'REVIEWING', title: 'Under Review', icon: 'eye', badgeColor: '#f59e0b', items: pipelineGroups.REVIEWING || [] },
+        { key: 'SHORTLISTED', title: 'Shortlisted', icon: 'check-circle', badgeColor: '#0d9488', items: pipelineGroups.SHORTLISTED || [] },
+        { key: 'INTERVIEW', title: 'Interviewing', icon: 'calendar', badgeColor: '#8b5cf6', items: pipelineGroups.INTERVIEW || [] },
+        { key: 'HIRED', title: 'Hired / Offered', icon: 'zap', badgeColor: '#10b981', items: pipelineGroups.HIRED || [] },
+        { key: 'REJECTED', title: 'Rejected', icon: 'x', badgeColor: '#ef4444', items: pipelineGroups.REJECTED || [] }
+      ];
+    %>
+
+    <% columns.forEach(function(col) { %>
+      <div class="kanban-col" style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 14px; display: flex; flex-direction: column; min-height: 520px; max-height: 80vh;">
+        
+        <!-- Column Header -->
+        <div style="padding: 14px 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; background: var(--color-bg-surface); border-top-left-radius: 14px; border-top-right-radius: 14px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92rem; color: var(--color-text);">
+            <span style="color: <%= col.badgeColor %>;"><%- icon(col.icon) %></span>
+            <%= col.title %>
+          </div>
+          <span style="background: <%= col.badgeColor %>22; color: <%= col.badgeColor %>; font-size: 0.78rem; font-weight: 800; padding: 2px 8px; border-radius: 10px;">
+            <%= col.items.length %>
+          </span>
+        </div>
+
+        <!-- Cards Scrollable Area -->
+        <div style="flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+          <% if (col.items.length === 0) { %>
+            <div style="text-align: center; padding: 32px 12px; color: var(--color-text-muted); font-size: 0.82rem;">
+              No candidates in this stage
+            </div>
+          <% } else { %>
+            <% col.items.forEach(function(app) { %>
+              <div class="kanban-card" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 14px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="avatar-sm" style="background: <%= colorForName(app.name) %>; width: 30px; height: 30px; font-size: 0.78rem; color: #fff; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;">
+                      <%= initialsFor(app.name) %>
+                    </span>
+                    <div>
+                      <h4 style="margin: 0; font-size: 0.92rem; font-weight: 700;">
+                        <a href="/recruiter/applicants/<%= app.id %>" style="color: var(--color-text); text-decoration: none;">
+                          <%= app.name %>
+                        </a>
+                      </h4>
+                      <span style="font-size: 0.76rem; color: var(--color-text-muted);"><%= timeAgo(app.createdAt) %></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <div style="font-size: 0.82rem; font-weight: 600; color: var(--brand-600);">
+                    <%= app.job.designation %>
+                  </div>
+                  <% if (app.skillMatch) { %>
+                    <span style="font-size: 0.72rem; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: <%= app.skillMatch.tierColor %>22; color: <%= app.skillMatch.tierColor %>; border: 1px solid <%= app.skillMatch.tierColor %>55; white-space: nowrap;">
+                      🎯 <%= app.skillMatch.tierLabel %>
+                    </span>
+                  <% } %>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--color-text-muted); margin-bottom: 12px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                  <%= app.email %> &middot; <%= app.contact %>
+                </div>
+
+                <!-- Card Actions Toolbar -->
+                <div style="display: flex; gap: 6px; border-top: 1px solid var(--color-border); padding-top: 10px;">
+                  <% if (app.resumePath) { %>
+                    <button type="button" class="btn btn-ghost btn-sm preview-resume-btn" 
+                            data-resume="/uploads/<%= app.resumePath.split(/[\\/]/).pop() %>" 
+                            data-candidate="<%= app.name %>"
+                            style="flex: 1; padding: 4px 6px; font-size: 0.76rem; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--color-border);"
+                            title="Instant preview resume">
+                      <%- icon('file-text') %> Resume
+                    </button>
+                  <% } %>
+                  <a href="/recruiter/applicants/<%= app.id %>" class="btn btn-primary btn-sm" style="flex: 1; padding: 4px 6px; font-size: 0.76rem; text-align: center; text-decoration: none;">
+                    Review →
+                  </a>
                 </div>
               </div>
-            </td>
-            <td>
-              <div style="font-weight: 500;"><%= application.job.designation %></div>
-              <div class="sub"><%= application.job.companyName %></div>
-            </td>
-            <td><%= formatDate(application.createdAt) %></td>
-            <td>
-              <span class="status-badge status-<%= application.status.toLowerCase() %>">
-                <%= application.status.replaceAll("_", " ") %>
-              </span>
-            </td>
-            <td style="text-align: right;">
-              <a href="/recruiter/applicants/<%= application.id %>" class="btn btn-secondary btn-sm" style="padding: 5px 14px; font-weight: 600;">
-                Review candidate
-              </a>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
   </div>
 
-  <nav class="pagination" aria-label="Applicant pages" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-    <div>
-      <% if (pagination.page > 1) { %>
-        <a href="/recruiter/applicants?<%= pageParams(pagination.page - 1) %>" class="btn btn-secondary btn-sm">
-          <%- icon('arrow-left') %> Previous
-        </a>
-      <% } %>
+<% } else { %>
+
+  <!-- ── Table View ── -->
+  <div class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Candidate</th>
+            <th>Applied Role</th>
+            <th>Skill Match</th>
+            <th>Applied Date</th>
+            <th>Stage / Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% applications.forEach(function (application) { %>
+            <% const statusLower = (application.status || 'new').toLowerCase(); %>
+            <tr>
+              <td>
+                <div class="cell-user" style="display: flex; align-items: center; gap: 10px;">
+                  <span class="avatar-sm" style="background: <%= colorForName(application.name) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">
+                    <%= initialsFor(application.name) %>
+                  </span>
+                  <div>
+                    <div class="name" style="font-weight: 600;">
+                      <a href="/recruiter/applicants/<%= application.id %>" style="color: var(--color-text); text-decoration: none;">
+                        <%= application.name %>
+                      </a>
+                    </div>
+                    <div class="sub" style="font-size: 0.8rem; color: var(--color-text-muted);"><%= application.email %> &middot; <%= application.contact %></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="font-weight: 600;"><%= application.job.designation %></div>
+                <div class="sub" style="font-size: 0.8rem; color: var(--color-text-muted);"><%= application.job.companyName %></div>
+              </td>
+              <td>
+                <% if (application.skillMatch) { %>
+                  <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; background: <%= application.skillMatch.tierColor %>1a; color: <%= application.skillMatch.tierColor %>; border: 1px solid <%= application.skillMatch.tierColor %>44;">
+                    🎯 <%= application.skillMatch.tierLabel %>
+                  </span>
+                <% } else { %>
+                  <span style="font-size: 0.78rem; color: var(--color-text-muted);">&mdash;</span>
+                <% } %>
+              </td>
+              <td style="font-size: 0.88rem; color: var(--color-text-muted);">
+                <%= formatDate(application.createdAt) %>
+              </td>
+              <td>
+                <span class="status-badge status-<%= statusLower %>">
+                  <%= application.status.replaceAll("_", " ") %>
+                </span>
+              </td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 8px; align-items: center;">
+                  <% if (application.resumePath) { %>
+                    <button type="button" class="btn btn-ghost btn-sm preview-resume-btn" 
+                            data-resume="/uploads/<%= application.resumePath.split(/[\\/]/).pop() %>" 
+                            data-candidate="<%= application.name %>"
+                            style="display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--color-border);"
+                            title="Preview resume without downloading">
+                      <%- icon('file-text') %> Preview
+                    </button>
+                  <% } %>
+                  <a href="/recruiter/applicants/<%= application.id %>" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">
+                    Review Details
+                  </a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
     </div>
-    <span style="font-size: 0.88rem; color: var(--color-text-muted); font-weight: 500;">
-      Page <%= pagination.page %> of <%= pagination.pages %> (<%= pagination.total %> total)
-    </span>
-    <div>
-      <% if (pagination.page < pagination.pages) { %>
-        <a href="/recruiter/applicants?<%= pageParams(pagination.page + 1) %>" class="btn btn-secondary btn-sm">
-          Next <%- icon('arrow-right') %>
-        </a>
-      <% } %>
-    </div>
-  </nav>
+
+    <!-- Pagination Controls -->
+    <% if (pagination.totalPages > 1) { %>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <span style="font-size: 0.85rem; color: var(--color-text-muted);">
+          Page <%= pagination.page %> of <%= pagination.totalPages %> (<%= pagination.total %> total)
+        </span>
+        <div style="display: flex; gap: 8px;">
+          <% if (pagination.hasPrev) { %>
+            <a href="/recruiter/applicants?<%= pageParams(pagination.page - 1) %>" class="btn btn-secondary btn-sm">Previous</a>
+          <% } %>
+          <% if (pagination.hasNext) { %>
+            <a href="/recruiter/applicants?<%= pageParams(pagination.page + 1) %>" class="btn btn-secondary btn-sm">Next</a>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
 <% } %>
+
+<!-- ── Inline Resume Previewer Modal ── -->
+<div id="resumePreviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+  <div style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; width: 100%; max-width: 900px; height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-lg);">
+    
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; background: var(--color-bg);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="color: var(--brand-600);"><%- icon('file-text') %></span>
+        <div>
+          <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;" id="resumeCandidateTitle">Resume Preview</h3>
+          <span style="font-size: 0.78rem; color: var(--color-text-muted);">Inline Document Viewer</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a id="resumeDownloadLink" href="#" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">
+          <%- icon('upload') %> Open Original
+        </a>
+        <button type="button" id="closeResumeModalBtn" class="btn btn-ghost btn-sm" style="font-size: 1.2rem; padding: 4px 10px;" aria-label="Close modal">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <div style="flex: 1; background: #525659; position: relative;">
+      <iframe id="resumeViewerIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modal = document.getElementById("resumePreviewModal");
+    const iframe = document.getElementById("resumeViewerIframe");
+    const title = document.getElementById("resumeCandidateTitle");
+    const downloadLink = document.getElementById("resumeDownloadLink");
+    const closeBtn = document.getElementById("closeResumeModalBtn");
+
+    function openResume(url, candidateName) {
+      if (!url) return;
+      title.textContent = (candidateName ? `${candidateName}'s Resume` : "Candidate Resume");
+      downloadLink.href = url;
+      iframe.src = url;
+      modal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeResume() {
+      modal.style.display = "none";
+      iframe.src = "";
+      document.body.style.overflow = "";
+    }
+
+    document.querySelectorAll(".preview-resume-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const resumeUrl = btn.getAttribute("data-resume");
+        const candidate = btn.getAttribute("data-candidate");
+        openResume(resumeUrl, candidate);
+      });
+    });
+
+    closeBtn.addEventListener("click", closeResume);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeResume();
+    });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.style.display === "flex") closeResume();
+    });
+  })();
+</script>

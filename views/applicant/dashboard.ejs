@@ -2,50 +2,233 @@
   <div>
     <span class="eyebrow">Candidate Portal</span>
     <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Welcome back, <%= user.name %></h1>
-    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">Track your active job applications, interview schedules, and saved roles.</p>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">Track your active job applications, interview schedules, and career progress.</p>
+  </div>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <a href="/jobs" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <%- icon('search') %> Browse Jobs
+    </a>
+    <a href="/applicant/saved" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <%- icon('bookmark') %> Saved (<%= stats.savedJobsCount || 0 %>)
+    </a>
   </div>
 </div>
 
-<div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
-  <%- include('../partials/shell/stat-card', { statIcon: 'briefcase', statValue: stats.totalApplications, statLabel: 'Total Applications' }) %>
-  <%- include('../partials/shell/stat-card', { statIcon: 'check-circle', statValue: stats.shortlisted, statLabel: 'Shortlisted' }) %>
-  <%- include('../partials/shell/stat-card', { statIcon: 'calendar', statValue: stats.upcomingInterviewsCount, statLabel: 'Upcoming Interviews' }) %>
-  <%- include('../partials/shell/stat-card', { statIcon: 'bookmark', statValue: stats.savedJobsCount, statLabel: 'Saved Jobs' }) %>
+<% if (upcomingInterviews && upcomingInterviews.length > 0) { %>
+  <div class="panel" style="background: linear-gradient(135deg, rgba(14, 116, 214, 0.18), rgba(16, 185, 129, 0.18)); border: 1px solid var(--brand-500); border-radius: 18px; padding: 20px 24px; margin-bottom: 24px; backdrop-filter: blur(12px);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <span style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #0284c7, #0d9488); color: #fff; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);">
+          <%- icon('calendar') %>
+        </span>
+        <div>
+          <h3 style="margin: 0 0 2px; font-size: 1.05rem; font-weight: 800; color: var(--color-text);">
+            <%= upcomingInterviews[0].roundName || 'Upcoming Interview' %> &middot; <%= upcomingInterviews[0].job.designation %>
+          </h3>
+          <p style="margin: 0; font-size: 0.86rem; color: var(--color-text-muted);">
+            <%= upcomingInterviews[0].job.companyName %> &middot; <%- icon('clock') %> <%= formatDate(upcomingInterviews[0].scheduledAt) %>
+          </p>
+        </div>
+      </div>
+      <div>
+        <% if (upcomingInterviews[0].meetingUrl) { %>
+          <a href="<%= upcomingInterviews[0].meetingUrl %>" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+            <%- icon('zap') %> Join Meeting
+          </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<!-- ── Esri Dual-Mode 3-Widget Dashboard Grid ────────────────── -->
+<div class="esri-dashboard-grid">
+  <!-- 1. Left Progress Card Widget -->
+  <div class="card-esri-progress">
+    <div>
+      <div class="widget-eyebrow">
+        <%- icon('sparkles', 'widget-eyebrow-icon') %>
+        <span>My Progress</span>
+      </div>
+      <h2>What's my<br />progress?</h2>
+    </div>
+
+    <div>
+      <div class="progress-metric-row">
+        <span class="metric-label">Profile Strength</span>
+        <span class="metric-value"><%= typeof completeness !== 'undefined' ? completeness.percentage : 0 %>%</span>
+      </div>
+      <div class="progress-metric-row">
+        <span class="metric-label">Applied Roles</span>
+        <span class="metric-value"><%= stats.totalApplications %></span>
+      </div>
+      <div class="progress-metric-row">
+        <span class="metric-label">Shortlisted</span>
+        <span class="metric-value"><%= stats.totalApplications > 0 ? Math.round((stats.shortlisted / stats.totalApplications) * 100) : 0 %>%</span>
+      </div>
+      <div class="progress-metric-row">
+        <span class="metric-label">Interview Stage</span>
+        <span class="metric-value"><%= stats.totalApplications > 0 ? Math.round((stats.upcomingInterviewsCount / stats.totalApplications) * 100) : 0 %>%</span>
+      </div>
+      <div class="progress-metric-row">
+        <span class="metric-label">Saved Roles</span>
+        <span class="metric-value"><%= stats.savedJobsCount || 0 %></span>
+      </div>
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.15);">
+        <a href="/applicant/profile" style="color: #ffffff; font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <%- icon('zap') %> Enhance Key Skills &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Main Center Applications & Pipeline Widget -->
+  <div class="card-esri-gradient">
+    <div class="card-esri-header">
+      <div class="card-esri-title-group">
+        <span style="display:inline-flex; width:22px; height:22px; align-items:center; justify-content:center;">
+          <%- icon('file-text') %>
+        </span>
+        <h2>My Applications</h2>
+        <span class="badge-counter"><%= stats.totalApplications %></span>
+      </div>
+      <a href="/applicant/applications" class="card-action-link">
+        See All Applications <%- icon('chevron-right') %>
+      </a>
+    </div>
+
+    <% if (!applications || applications.length === 0) { %>
+      <div style="text-align: center; padding: 48px 20px; color: rgba(255, 255, 255, 0.8);">
+        <p style="margin-bottom: 14px; font-size: 0.95rem;">No active applications submitted yet.</p>
+        <a href="/jobs" class="btn btn-secondary btn-sm" style="background: rgba(255, 255, 255, 0.2); color: #fff; border: 1px solid rgba(255, 255, 255, 0.35);">
+          <%- icon('search') %> Explore Open Roles
+        </a>
+      </div>
+    <% } else { %>
+      <div style="overflow-x: auto;">
+        <table class="table-esri">
+          <thead>
+            <tr>
+              <th>Role Name</th>
+              <th>Category & Match</th>
+              <th>Date Applied</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% applications.slice(0, 4).forEach(function (app, idx) { %>
+              <tr onclick="window.location.href='/applicant/applications/<%= app.id %>'">
+                <td style="font-weight: 700;">
+                  <a href="/applicant/applications/<%= app.id %>" style="color: #ffffff; text-decoration: none;">
+                    <%= app.job.designation %>
+                  </a>
+                  <div style="font-size: 0.76rem; opacity: 0.8; font-weight: 500;"><%= app.job.companyName %></div>
+                </td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span class="cat-badge">
+                      <span class="cat-dot-ring">
+                        <span class="cat-dot <%= idx % 3 === 0 ? 'green' : (idx % 3 === 1 ? 'blue' : 'amber') %>"></span>
+                      </span>
+                      <span><%= app.job.category || 'Engineering' %></span>
+                    </span>
+                    <% if (app.skillMatch) { %>
+                      <span style="font-size: 0.72rem; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.25);">
+                        🎯 <%= app.skillMatch.score %>%
+                      </span>
+                    <% } %>
+                  </div>
+                </td>
+                <td style="font-size: 0.84rem; opacity: 0.9;"><%= formatDate(app.createdAt) %></td>
+                <td>
+                  <span class="badge-esri-status <%= (app.status === 'SHORTLISTED' || app.status === 'INTERVIEW_SCHEDULED') ? 'status-closed' : 'status-running' %>">
+                    <%= app.status.replaceAll('_', ' ') %>
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <a href="/applicant/applications/<%= app.id %>" style="color: #ffffff; text-decoration: none; font-weight: 600; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 4px;">
+                    Track <%- icon('chevron-right') %>
+                  </a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
 </div>
 
-<div class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; padding: 24px; margin-bottom: 28px;">
-  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-    <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0;">Recent Applications</h2>
-    <a href="/applicant/applications" class="btn btn-secondary btn-sm">View all</a>
+<!-- 3. Wide Assigned Projects / Saved Roles Widget -->
+<div class="card-esri-wide">
+  <div class="card-esri-header">
+    <div class="card-esri-title-group">
+      <span style="display:inline-flex; width:22px; height:22px; align-items:center; justify-content:center;">
+        <%- icon('briefcase') %>
+      </span>
+      <h2>Active Job Pipeline & Saved Roles</h2>
+      <span class="badge-counter"><%= applications.length %></span>
+    </div>
+    <a href="/applicant/applications" class="card-action-link">
+      See All Roles <%- icon('chevron-right') %>
+    </a>
   </div>
 
   <% if (!applications || applications.length === 0) { %>
-    <%- include('../partials/shell/empty-state', { emptyIcon: 'inbox', emptyTitle: 'No applications yet', emptySubtitle: 'Explore open roles on the job board and submit your resume.' }) %>
+    <p style="color: rgba(255, 255, 255, 0.8); text-align: center; padding: 32px 0; margin: 0;">
+      Your active project pipeline will appear here once you submit applications.
+    </p>
   <% } else { %>
-    <div class="table-wrap">
-      <table>
+    <div style="overflow-x: auto;">
+      <table class="table-esri">
         <thead>
           <tr>
-            <th>Role</th>
-            <th>Company</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Applied</th>
-            <th style="text-align: right;">Action</th>
+            <th>Role & Company</th>
+            <th>Location & CTC</th>
+            <th>Skill Match</th>
+            <th>Project Status</th>
+            <th>% Pipeline Progress</th>
           </tr>
         </thead>
         <tbody>
-          <% applications.slice(0, 5).forEach(function (app) { %>
-            <tr>
-              <td style="font-weight: 600;"><%= app.job.designation %></td>
-              <td><%= app.job.companyName %></td>
-              <td><%= app.job.location %></td>
-              <td><span class="status-badge"><%= app.status.replaceAll('_', ' ') %></span></td>
-              <td><%= timeAgo(app.createdAt) %></td>
-              <td style="text-align: right;">
-                <a href="/applicant/applications/<%= app.id %>" class="btn btn-secondary btn-sm">Details</a>
+          <% applications.slice(0, 4).forEach(function (app, idx) { %>
+            <% 
+              let progressPct = 20;
+              let progressColor = '#38bdf8';
+              if (app.status === 'REVIEWING')            { progressPct = 40; progressColor = '#0e74d6'; }
+              if (app.status === 'SHORTLISTED')          { progressPct = 60; progressColor = '#0d9488'; }
+              if (app.status === 'INTERVIEW_SCHEDULED' || app.status === 'INTERVIEWED') { progressPct = 80; progressColor = '#6366f1'; }
+              if (app.status === 'HIRED')                { progressPct = 100; progressColor = '#10b981'; }
+              if (app.status === 'REJECTED')             { progressPct = 100; progressColor = '#ef4444'; }
+            %>
+            <tr onclick="window.location.href='/applicant/applications/<%= app.id %>'">
+              <td style="font-weight: 700;">
+                <span style="opacity: 0.7; margin-right: 6px;"><%= idx + 1 %>.</span>
+                <%= app.job.designation %>
+                <span style="font-weight: 500; opacity: 0.8; margin-left: 6px;">&middot; <%= app.job.companyName %></span>
+              </td>
+              <td><%= app.job.location %> &middot; <%= app.job.salary || 'Competitive' %></td>
+              <td>
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; background: <%= app.skillMatch && app.skillMatch.score >= 80 ? 'rgba(16, 185, 129, 0.25)' : (app.skillMatch && app.skillMatch.score >= 50 ? 'rgba(14, 116, 214, 0.25)' : 'rgba(245, 158, 11, 0.25)') %>; color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.3);">
+                  🎯 <%= app.skillMatch ? app.skillMatch.score : 0 %>%
+                </span>
+              </td>
+              <td>
+                <span class="badge-esri-status <%= progressPct === 100 ? 'status-closed' : 'status-running' %>">
+                  <%= app.status.replaceAll('_', ' ') %>
+                </span>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-weight: 700; font-size: 0.84rem; min-width: 36px; color: <%= progressColor %>;"><%= progressPct %>%</span>
+                  <div style="flex: 1; max-width: 140px; height: 7px; background: rgba(255, 255, 255, 0.2); border-radius: 999px; overflow: hidden;">
+                    <div style="width: <%= progressPct %>%; height: 100%; background: <%= progressColor %>; border-radius: 999px; transition: width 0.5s ease;"></div>
+                  </div>
+                </div>
               </td>
             </tr>
+
           <% }) %>
         </tbody>
       </table>

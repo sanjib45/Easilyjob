@@ -1,39 +1,395 @@
 <div class="page-header" style="margin-bottom: 24px;">
   <div>
-    <span class="eyebrow">Candidate Portal</span>
-    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Profile & Account Settings</h1>
-    <p class="subtitle" style="margin: 0; color: var(--app-text-muted);">Manage your personal information and candidate preferences.</p>
-  </div>
-</div>
-
-<div class="panel" style="max-width: 600px;">
-  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-    <span class="avatar" style="width: 64px; height: 64px; font-size: 1.5rem; background: <%= colorForName(user.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center; border-radius: 16px;">
-      <%= initialsFor(user.name) %>
+    <span class="eyebrow" style="display:inline-flex; align-items:center; gap:6px;">
+      <%- icon('sparkles') %> Candidate Portal &middot; Naukri Profile System
     </span>
-    <div>
-      <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700;"><%= user.name %></h2>
-      <p style="margin: 2px 0 0; color: var(--app-text-muted); font-size: 0.9rem;"><%= user.email %></p>
-      <span class="role-badge" style="margin-top: 6px; display: inline-block;">Candidate</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Professional Profile & Key Skills Hub</h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">
+      Build your comprehensive skillset and career preferences to unlock accurate real-time job match scoring.
+    </p>
+  </div>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <a href="/applicant/dashboard" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <%- icon('arrow-left') %> Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="profile-layout-grid" style="display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start;">
+  <!-- Left Column: Profile Strength & Quick Summary -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Profile Completeness Card -->
+    <div class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <span style="font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted);">
+          Profile Strength
+        </span>
+        <span style="font-size: 1.25rem; font-weight: 800; color: <%= completeness.percentage >= 80 ? 'var(--color-success)' : (completeness.percentage >= 50 ? 'var(--brand-500)' : 'var(--color-warning)') %>;">
+          <%= completeness.percentage %>%
+        </span>
+      </div>
+
+      <!-- Visual Progress Bar -->
+      <div style="width: 100%; height: 10px; background: rgba(120, 140, 160, 0.15); border-radius: 999px; overflow: hidden; margin-bottom: 16px;">
+        <div style="width: <%= completeness.percentage %>%; height: 100%; background: <%= completeness.percentage >= 80 ? 'linear-gradient(90deg, #10b981, #059669)' : (completeness.percentage >= 50 ? 'linear-gradient(90deg, #0e74d6, #0284c7)' : 'linear-gradient(90deg, #f59e0b, #d97706)') %>; border-radius: 999px; transition: width 0.4s ease;"></div>
+      </div>
+
+      <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0 0 16px; line-height: 1.45;">
+        <% if (completeness.percentage >= 80) { %>
+          🔥 <strong>Excellent Profile Strength!</strong> Your profile is primed for maximum recruiter visibility and top skill matching.
+        <% } else if (completeness.percentage >= 50) { %>
+          ⚡ <strong>Good Start!</strong> Add your core technical skills and experience to unlock 100% match scoring across open jobs.
+        <% } else { %>
+          🌱 <strong>Incomplete Profile.</strong> Complete the checklist below to improve your job application match ranking.
+        <% } %>
+      </p>
+
+      <!-- Milestones List -->
+      <div style="display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--color-border); padding-top: 16px;">
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase;">
+          Profile Milestones
+        </div>
+        <% completeness.completedMilestones.forEach(function(item) { %>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--color-text);">
+            <span style="color: #10b981; display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; background: rgba(16, 185, 129, 0.15); border-radius: 50%; font-size: 0.72rem; font-weight: 800;">✓</span>
+            <span><%= item %></span>
+          </div>
+        <% }) %>
+        <% completeness.pendingMilestones.forEach(function(item) { %>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.84rem; color: var(--color-text-muted);">
+            <span style="color: #f59e0b; display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; background: rgba(245, 158, 11, 0.15); border-radius: 50%; font-size: 0.72rem; font-weight: 800;">+</span>
+            <span><%= item %></span>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Candidate Card Preview -->
+    <div class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 20px; padding: 20px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 14px;">
+        <span class="avatar" style="width: 52px; height: 52px; font-size: 1.25rem; background: <%= colorForName(candidateUser ? candidateUser.name : user.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center; border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <%= initialsFor(candidateUser ? candidateUser.name : user.name) %>
+        </span>
+        <div style="overflow: hidden;">
+          <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--color-text); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+            <%= candidateUser ? candidateUser.name : user.name %>
+          </h3>
+          <p style="margin: 2px 0 0; color: var(--color-text-muted); font-size: 0.82rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+            <%= candidateUser ? candidateUser.email : user.email %>
+          </p>
+        </div>
+      </div>
+
+      <% if (candidateUser && candidateUser.headline) { %>
+        <p style="margin: 0 0 12px; font-size: 0.86rem; font-weight: 600; color: var(--brand-500); line-height: 1.35;">
+          <%= candidateUser.headline %>
+        </p>
+      <% } %>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: var(--color-text-muted);">
+        <% if (candidateUser && candidateUser.location) { %>
+          <span style="display:inline-flex; align-items:center; gap:4px; padding: 3px 8px; background: var(--color-bg); border-radius: 6px; border: 1px solid var(--color-border);">
+            <%- icon('map-pin') %> <%= candidateUser.location %>
+          </span>
+        <% } %>
+        <% if (candidateUser && candidateUser.experienceYears !== null && candidateUser.experienceYears !== undefined) { %>
+          <span style="display:inline-flex; align-items:center; gap:4px; padding: 3px 8px; background: var(--color-bg); border-radius: 6px; border: 1px solid var(--color-border);">
+            <%- icon('briefcase') %> <%= candidateUser.experienceYears %> <%= candidateUser.experienceYears === 1 ? 'year' : 'years' %> exp
+          </span>
+        <% } %>
+      </div>
     </div>
   </div>
 
-  <form action="/applicant/profile" method="POST" data-confirm data-confirm-title="Update Candidate Profile" data-confirm-message="Save changes to your candidate profile?" data-confirm-action="Save Profile" data-confirm-variant="primary">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+  <!-- Right Column: Profile Edit Form & Skills Studio -->
+  <div class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 20px; padding: 28px; box-shadow: var(--shadow-sm);">
+    <form id="profileForm" action="/applicant/profile" method="POST" data-confirm data-confirm-title="Save Candidate Profile" data-confirm-message="Update your professional details and key skillset?" data-confirm-action="Save Profile" data-confirm-variant="primary">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
-    <div class="form-group" style="margin-bottom: 16px;">
-      <label for="name" style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 6px;">Full Name</label>
-      <input type="text" id="name" name="name" value="<%= user.name %>" required style="width: 100%;" />
-    </div>
+      <!-- SECTION 1: Key Skills Matrix (Naukri Style) -->
+      <div style="margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--color-border);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <div>
+            <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--color-text); display:flex; align-items:center; gap:8px;">
+              <%- icon('zap') %> Key Skills & Tech Stack
+            </h2>
+            <p style="margin: 2px 0 0; font-size: 0.84rem; color: var(--color-text-muted);">
+              Add technical skills, tools, and frameworks. These are directly compared against job requirements to calculate your match score.
+            </p>
+          </div>
+          <span id="skillCounter" style="font-size: 0.82rem; font-weight: 700; padding: 4px 10px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 999px;">
+            <%= userSkills.length %> Skills
+          </span>
+        </div>
 
-    <div class="form-group" style="margin-bottom: 20px;">
-      <label for="email" style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 6px;">Email Address</label>
-      <input type="email" id="email" value="<%= user.email %>" disabled style="width: 100%; opacity: 0.7;" />
-      <p class="hint" style="font-size: 0.78rem; color: var(--app-text-muted); margin-top: 4px;">Email address cannot be changed.</p>
-    </div>
+        <!-- Hidden Input for Form Submission -->
+        <input type="hidden" id="skillsHiddenInput" name="skills" value="<%= (candidateUser && candidateUser.skills) ? candidateUser.skills : '' %>" />
 
-    <button type="submit" class="btn btn-primary" style="width: 100%;">
-      Save profile
-    </button>
-  </form>
+        <!-- Interactive Skill Tag Container -->
+        <div id="skillsTagContainer" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; padding: 12px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 12px; margin-bottom: 12px;">
+          <% if (userSkills.length === 0) { %>
+            <span id="noSkillsPlaceholder" style="font-size: 0.85rem; color: var(--color-text-muted); align-self: center;">
+              No skills added yet. Type a skill below or click popular suggestions to add!
+            </span>
+          <% } %>
+          <% userSkills.forEach(function(skill) { %>
+            <span class="skill-tag-pill" data-skill="<%= skill %>" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; background: linear-gradient(135deg, rgba(14, 116, 214, 0.15), rgba(16, 185, 129, 0.15)); border: 1px solid var(--brand-500); border-radius: 999px; font-size: 0.84rem; font-weight: 600; color: var(--color-text);">
+              <span><%= skill %></span>
+              <button type="button" class="remove-skill-btn" style="background: none; border: none; cursor: pointer; color: var(--color-text-muted); font-size: 1rem; line-height: 1; padding: 0 2px;" title="Remove skill">&times;</button>
+            </span>
+          <% }) %>
+        </div>
+
+        <!-- Input Box to Add New Skill -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <input type="text" id="skillInput" placeholder="e.g. React, Node.js, Python, AWS, Docker..." style="flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); font-size: 0.9rem;" />
+          <button type="button" id="addSkillBtn" class="btn btn-secondary btn-sm" style="padding: 0 18px; font-weight: 600;">
+            + Add Skill
+          </button>
+        </div>
+
+        <!-- Popular Suggested Skills Chips -->
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--color-text-muted); display: block; margin-bottom: 8px;">
+            Quick-Add Popular Skills:
+          </span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <% popularSkills.forEach(function(chip) { %>
+              <button type="button" class="popular-chip-btn" data-chip="<%= chip %>" style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 999px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; color: var(--color-text-muted); cursor: pointer; transition: all 0.15s ease;">
+                + <%= chip %>
+              </button>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Professional Narrative & Bio -->
+      <div style="margin-bottom: 24px;">
+        <h2 style="margin: 0 0 14px; font-size: 1.15rem; font-weight: 800; color: var(--color-text); display:flex; align-items:center; gap:8px;">
+          <%- icon('user') %> Professional Identity
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div class="form-group">
+            <label for="name" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">Full Name *</label>
+            <input type="text" id="name" name="name" value="<%= candidateUser ? candidateUser.name : user.name %>" required style="width: 100%;" />
+          </div>
+
+          <div class="form-group">
+            <label for="email" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">Email Address</label>
+            <input type="email" id="email" value="<%= candidateUser ? candidateUser.email : user.email %>" disabled style="width: 100%; opacity: 0.65; cursor: not-allowed;" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="headline" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+            Professional Headline
+          </label>
+          <input type="text" id="headline" name="headline" placeholder="e.g. Senior Full Stack Engineer | React, Node.js & Cloud Architect" value="<%= candidateUser && candidateUser.headline ? candidateUser.headline : '' %>" style="width: 100%;" />
+          <p class="hint" style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 4px;">A concise one-line summary displayed under your name on applications.</p>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="bio" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+            Career Summary / Bio
+          </label>
+          <textarea id="bio" name="bio" rows="3" placeholder="Briefly describe your career background, primary achievements, and career goals..." style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); font-family: inherit; font-size: 0.88rem;"><%= candidateUser && candidateUser.bio ? candidateUser.bio : '' %></textarea>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Experience, Education & Career Preferences -->
+      <div style="margin-bottom: 28px; padding-top: 20px; border-top: 1px solid var(--color-border);">
+        <h2 style="margin: 0 0 14px; font-size: 1.15rem; font-weight: 800; color: var(--color-text); display:flex; align-items:center; gap:8px;">
+          <%- icon('briefcase') %> Experience & Education
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div class="form-group">
+            <label for="experienceYears" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+              Total Experience (in Years)
+            </label>
+            <input type="number" step="0.5" min="0" max="40" id="experienceYears" name="experienceYears" placeholder="e.g. 3.5" value="<%= (candidateUser && candidateUser.experienceYears !== null && candidateUser.experienceYears !== undefined) ? candidateUser.experienceYears : '' %>" style="width: 100%;" />
+          </div>
+
+          <div class="form-group">
+            <label for="currentCompany" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+              Current / Most Recent Company
+            </label>
+            <input type="text" id="currentCompany" name="currentCompany" placeholder="e.g. TechCorp / Freelance" value="<%= candidateUser && candidateUser.currentCompany ? candidateUser.currentCompany : '' %>" style="width: 100%;" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div class="form-group">
+            <label for="education" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+              Highest Qualification / Degree
+            </label>
+            <input type="text" id="education" name="education" placeholder="e.g. B.Tech Computer Science / MCA" value="<%= candidateUser && candidateUser.education ? candidateUser.education : '' %>" style="width: 100%;" />
+          </div>
+
+          <div class="form-group">
+            <label for="location" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+              Current / Preferred Location
+            </label>
+            <input type="text" id="location" name="location" placeholder="e.g. Bengaluru, India / Remote" value="<%= candidateUser && candidateUser.location ? candidateUser.location : '' %>" style="width: 100%;" />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div class="form-group">
+            <label for="expectedSalary" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+              Expected CTC / Salary
+            </label>
+            <input type="text" id="expectedSalary" name="expectedSalary" placeholder="e.g. 12-15 LPA / Negotiable" value="<%= candidateUser && candidateUser.expectedSalary ? candidateUser.expectedSalary : '' %>" style="width: 100%;" />
+          </div>
+
+          <div class="form-group">
+            <label for="phone" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+              Phone Number
+            </label>
+            <input type="text" id="phone" name="phone" placeholder="e.g. +91 98765 43210" value="<%= candidateUser && candidateUser.phone ? candidateUser.phone : '' %>" style="width: 100%;" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="resumeUrl" style="font-weight: 600; font-size: 0.86rem; display: block; margin-bottom: 6px;">
+            Online Resume / Portfolio Link
+          </label>
+          <input type="url" id="resumeUrl" name="resumeUrl" placeholder="e.g. https://linkedin.com/in/username or portfolio link" value="<%= candidateUser && candidateUser.resumeUrl ? candidateUser.resumeUrl : '' %>" style="width: 100%;" />
+        </div>
+      </div>
+
+      <!-- Submit Action Button -->
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <a href="/applicant/dashboard" class="btn btn-secondary">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; font-weight: 700;">
+          <%- icon('check') %> Save & Update Profile
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<script>
+  // Interactive Key Skills Tag Manager
+  (function () {
+    const hiddenInput = document.getElementById("skillsHiddenInput");
+    const container = document.getElementById("skillsTagContainer");
+    const input = document.getElementById("skillInput");
+    const addBtn = document.getElementById("addSkillBtn");
+    const counter = document.getElementById("skillCounter");
+    const popularChips = document.querySelectorAll(".popular-chip-btn");
+
+    function getSkills() {
+      const val = hiddenInput.value || "";
+      return val.split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    function setSkills(skills) {
+      // Remove duplicates case-insensitively
+      const seen = new Set();
+      const unique = [];
+      skills.forEach(s => {
+        const lower = s.toLowerCase();
+        if (!seen.has(lower) && s.length > 0) {
+          seen.add(lower);
+          unique.push(s);
+        }
+      });
+
+      hiddenInput.value = unique.join(", ");
+      renderTags(unique);
+    }
+
+    function renderTags(skills) {
+      container.innerHTML = "";
+      if (skills.length === 0) {
+        container.innerHTML = '<span id="noSkillsPlaceholder" style="font-size: 0.85rem; color: var(--color-text-muted); align-self: center;">No skills added yet. Type a skill below or click popular suggestions to add!</span>';
+      } else {
+        skills.forEach(skill => {
+          const pill = document.createElement("span");
+          pill.className = "skill-tag-pill";
+          pill.setAttribute("data-skill", skill);
+          pill.style.cssText = "display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; background: linear-gradient(135deg, rgba(14, 116, 214, 0.15), rgba(16, 185, 129, 0.15)); border: 1px solid var(--brand-500); border-radius: 999px; font-size: 0.84rem; font-weight: 600; color: var(--color-text);";
+          pill.innerHTML = `<span>${escapeHtml(skill)}</span><button type="button" class="remove-skill-btn" style="background: none; border: none; cursor: pointer; color: var(--color-text-muted); font-size: 1rem; line-height: 1; padding: 0 2px;" title="Remove skill">&times;</button>`;
+          
+          pill.querySelector(".remove-skill-btn").addEventListener("click", function (e) {
+            e.stopPropagation();
+            removeSkill(skill);
+          });
+
+          container.appendChild(pill);
+        });
+      }
+
+      if (counter) {
+        counter.textContent = `${skills.length} Skills`;
+      }
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    function addSkill(skillName) {
+      const clean = (skillName || "").trim();
+      if (!clean) return;
+      const current = getSkills();
+      if (!current.some(s => s.toLowerCase() === clean.toLowerCase())) {
+        current.push(clean);
+        setSkills(current);
+      }
+      if (input) input.value = "";
+    }
+
+    function removeSkill(skillName) {
+      const current = getSkills().filter(s => s.toLowerCase() !== skillName.toLowerCase());
+      setSkills(current);
+    }
+
+    if (addBtn && input) {
+      addBtn.addEventListener("click", () => addSkill(input.value));
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === ",") {
+          e.preventDefault();
+          addSkill(input.value);
+        }
+      });
+    }
+
+    popularChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        const val = chip.getAttribute("data-chip");
+        addSkill(val);
+      });
+    });
+
+    // Initial render check
+    setSkills(getSkills());
+  })();
+</script>
+
+<style>
+  @media (max-width: 900px) {
+    .profile-layout-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  .popular-chip-btn:hover {
+    background: var(--brand-500) !important;
+    color: #ffffff !important;
+    border-color: var(--brand-500) !important;
+    transform: translateY(-1px);
+  }
+  .remove-skill-btn:hover {
+    color: var(--color-danger) !important;
+  }
+</style>

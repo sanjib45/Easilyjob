@@ -1,5 +1,10 @@
+/**
+ * Easily Jobs - Unified Accessible Confirmation Modal
+ * Supports Light & Dark modes, custom action icons (logout, trash, alert, check, sparkles),
+ * focus trapping, Escape dismiss, and declarative form interception.
+ */
 (function () {
-  var backdrop, dialog, titleEl, messageEl, iconEl, cancelBtn, confirmBtn;
+  var backdrop, dialog, titleEl, messageEl, iconEl, cancelBtn, confirmBtn, closeBtn, btnTextEl;
   var triggerElement = null;
   var activeForm = null;
   var activeSubmitter = null;
@@ -15,8 +20,11 @@
     iconEl = document.getElementById("confirmModalIcon");
     cancelBtn = document.getElementById("confirmModalCancelBtn");
     confirmBtn = document.getElementById("confirmModalConfirmBtn");
+    closeBtn = document.getElementById("confirmModalCloseBtn");
+    btnTextEl = document.getElementById("confirmModalBtnText");
 
     if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
     if (backdrop) {
       backdrop.addEventListener("click", function (e) {
         if (e.target === backdrop && !isSubmitting) closeModal();
@@ -34,8 +42,9 @@
       // Focus trap
       if (e.key === "Tab" && dialog) {
         var focusables = dialog.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
+        if (focusables.length === 0) return;
         var first = focusables[0];
         var last = focusables[focusables.length - 1];
 
@@ -59,8 +68,14 @@
 
         isSubmitting = true;
         confirmBtn.disabled = true;
-        cancelBtn.disabled = true;
-        confirmBtn.innerHTML = '<span>Processing...</span>';
+        if (cancelBtn) cancelBtn.disabled = true;
+        if (closeBtn) closeBtn.disabled = true;
+        
+        if (btnTextEl) {
+          btnTextEl.textContent = "Processing...";
+        } else {
+          confirmBtn.innerHTML = '<span>Processing...</span>';
+        }
 
         if (activeSubmitter && activeSubmitter.name) {
           var hiddenInput = document.createElement("input");
@@ -71,8 +86,6 @@
         }
 
         activeForm.dataset.confirmed = "true";
-        // Use requestSubmit() so the submit event fires (needed for CSRF & validators).
-        // Fall back to submit() on very old browsers.
         if (typeof activeForm.requestSubmit === "function") {
           activeForm.requestSubmit(activeSubmitter instanceof HTMLElement ? activeSubmitter : null);
         } else {
@@ -95,6 +108,35 @@
     if (cancelBtn) {
       cancelBtn.disabled = false;
     }
+    if (closeBtn) {
+      closeBtn.disabled = false;
+    }
+  }
+
+  function updateIconSlot(iconName, variant) {
+    if (!iconEl) return;
+    var slots = iconEl.querySelectorAll(".confirm-icon-slot");
+    var matched = false;
+    
+    // Choose fallback icon name if not specified
+    if (!iconName) {
+      if (variant === "primary") iconName = "sparkles";
+      else if (variant === "success") iconName = "check-circle";
+      else iconName = "alert-triangle";
+    }
+
+    slots.forEach(function (slot) {
+      if (slot.getAttribute("data-icon") === iconName) {
+        slot.style.display = "inline-flex";
+        matched = true;
+      } else {
+        slot.style.display = "none";
+      }
+    });
+
+    if (!matched && slots.length > 0) {
+      slots[0].style.display = "inline-flex";
+    }
   }
 
   function openModal(options) {
@@ -111,26 +153,40 @@
     var message = options.message || "Are you sure you want to proceed?";
     var actionText = options.action || options.confirmText || "Proceed";
     var variant = (options.variant || "danger").toLowerCase();
+    var requestedIcon = options.icon || "";
 
-    // Use textContent to prevent HTML injection
+    // Auto-detect logout context if not explicitly set
+    if (!requestedIcon && (title.toLowerCase().includes("log out") || message.toLowerCase().includes("log out") || title.toLowerCase().includes("logout"))) {
+      requestedIcon = "log-out";
+      if (!options.variant) variant = "danger";
+    }
+
     if (titleEl) titleEl.textContent = title;
     if (messageEl) messageEl.textContent = message;
+
+    if (btnTextEl) {
+      btnTextEl.textContent = actionText;
+    }
     if (confirmBtn) {
-      confirmBtn.textContent = actionText;
-      confirmBtn.className = "btn " + (variant === "primary" ? "btn-primary" : "btn-danger");
+      confirmBtn.className = "btn confirm-modal-confirm " + (variant === "primary" ? "btn-primary" : "btn-danger");
     }
 
     if (iconEl) {
-      iconEl.className = "confirm-modal-icon-badge " + (variant === "primary" ? "variant-primary" : "variant-danger");
+      iconEl.className = "confirm-modal-icon-badge variant-" + variant;
+      if (requestedIcon === "log-out") {
+        iconEl.classList.add("variant-logout");
+      }
+      updateIconSlot(requestedIcon, variant);
     }
 
     backdrop.style.display = "flex";
     document.body.style.overflow = "hidden";
 
-    setTimeout(function () {
+    // Trigger transition
+    requestAnimationFrame(function () {
       backdrop.classList.add("is-open");
       if (confirmBtn) confirmBtn.focus();
-    }, 10);
+    });
 
     backdrop.setAttribute("aria-hidden", "false");
   }
@@ -142,7 +198,7 @@
 
     setTimeout(function () {
       backdrop.style.display = "none";
-    }, 200);
+    }, 220);
 
     backdrop.setAttribute("aria-hidden", "true");
     activeForm = null;
@@ -156,6 +212,7 @@
   }
 
   window.showConfirmModal = openModal;
+  window.closeConfirmModal = closeModal;
 
   document.addEventListener("DOMContentLoaded", function () {
     initModal();
@@ -170,22 +227,24 @@
 
       if (form.dataset.confirmed === "true") {
         delete form.dataset.confirmed;
-        return; // Allow native submission after modal confirmation
+        return; // Native submission after confirmation
       }
 
       e.preventDefault();
 
       var submitter = e.submitter || document.activeElement;
       var title = form.getAttribute("data-confirm-title") || "Confirm Action";
-      var message = form.getAttribute("data-confirm-message") || form.getAttribute("data-confirm") || "Are you sure?";
+      var message = form.getAttribute("data-confirm-message") || form.getAttribute("data-confirm") || "Are you sure you want to proceed?";
       var actionText = form.getAttribute("data-confirm-action") || "Confirm";
       var variant = form.getAttribute("data-confirm-variant") || "danger";
+      var iconName = form.getAttribute("data-confirm-icon") || "";
 
       openModal({
         title: title,
         message: message,
         action: actionText,
         variant: variant,
+        icon: iconName,
         form: form,
         submitter: submitter,
         trigger: submitter,

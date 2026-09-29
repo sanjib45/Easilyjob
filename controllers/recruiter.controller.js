@@ -34,6 +34,9 @@ export const renderRecruiterApplicant = asyncHandler(async (req, res) => {
 });
 
 export const renderRecruiterApplications = asyncHandler(async (req, res) => {
+  const viewMode = req.query.view === "pipeline" ? "pipeline" : "table";
+  const limit = viewMode === "pipeline" ? 100 : req.query.limit;
+
   const result = await listRecruiterApplications({
     recruiterId: req.user.id,
     search: req.query.q,
@@ -41,7 +44,7 @@ export const renderRecruiterApplications = asyncHandler(async (req, res) => {
     jobId: req.query.jobId,
     sort: req.query.sort,
     page: req.query.page,
-    limit: req.query.limit,
+    limit,
   });
 
   const jobs = await listOwnedJobs(req.user.id, {
@@ -49,9 +52,31 @@ export const renderRecruiterApplications = asyncHandler(async (req, res) => {
     orderBy: { createdAt: "desc" },
   });
 
+  const pipelineGroups = {
+    NEW: [],
+    REVIEWING: [],
+    SHORTLISTED: [],
+    INTERVIEW: [],
+    HIRED: [],
+    REJECTED: [],
+  };
+
+  result.applications.forEach((app) => {
+    const s = (app.status || "NEW").toUpperCase();
+    if (s === "INTERVIEW_SCHEDULED" || s === "INTERVIEWED") {
+      pipelineGroups.INTERVIEW.push(app);
+    } else if (pipelineGroups[s]) {
+      pipelineGroups[s].push(app);
+    } else {
+      pipelineGroups.NEW.push(app);
+    }
+  });
+
   res.render("recruiter/applicants", {
-    title: "Applicants",
+    title: viewMode === "pipeline" ? "ATS Candidate Pipeline" : "Applicants",
     applications: result.applications,
+    pipelineGroups,
+    viewMode,
     jobs,
     ...result,
   });

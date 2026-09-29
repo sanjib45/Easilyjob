@@ -7,6 +7,7 @@ import { sendApplicationEmails } from "../services/email.service.js";
 import { updateRecruiterApplication } from "../services/recruiter-review.service.js";
 import {
   listPublicJobs,
+  getPublicJobFacets,
   findPublicJobById,
   findOwnedJob,
   createJob,
@@ -18,6 +19,9 @@ import {
   findOwnedApplicationWithResume,
   submitApplication,
 } from "../repositories/application.repository.js";
+import { getUserSavedJobIds } from "../repositories/savedJob.repository.js";
+import { calculateSkillMatch } from "../services/skillMatch.service.js";
+import { prisma } from "../config/prisma.js";
 import { jobCache, invalidateJobCache } from "../utils/cache.js";
 
 const uploadsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "uploads");
@@ -50,18 +54,71 @@ const removeUploadedFile = async (file) => {
 export const renderAllJobs = asyncHandler(async (req, res) => {
   const search = typeof req.query.q === "string" ? req.query.q.trim() : "";
   const location = typeof req.query.location === "string" ? req.query.location.trim() : "";
-  const cacheKey = `public:jobs:q=${search}:loc=${location}`;
+  const category = typeof req.query.category === "string" ? req.query.category.trim() : "";
+  const skill = typeof req.query.skill === "string" ? req.query.skill.trim() : "";
+  const salaryBracket = typeof req.query.salary === "string" ? req.query.salary.trim() : "";
+  const sort = typeof req.query.sort === "string" ? req.query.sort.trim() : "recent";
+
+  const cacheKey = `public:jobs:q=${search}:loc=${location}:cat=${category}:skill=${skill}:sal=${salaryBracket}:sort=${sort}`;
 
   let jobs = jobCache.get(cacheKey);
   if (!jobs) {
-    jobs = await listPublicJobs({ search, location });
+    jobs = await listPublicJobs({
+      search,
+      location,
+      category,
+      skill,
+      salaryBracket,
+      sort,
+    });
     jobCache.set(cacheKey, jobs);
   }
 
+  let facets = jobCache.get("public:job:facets");
+  if (!facets) {
+    facets = await getPublicJobFacets();
+    jobCache.set("public:job:facets", facets);
+  }
+
+  const savedJobIds = req.user ? await getUserSavedJobIds(req.user.id) : [];
+
+  // If candidate is logged in, attach personalized real-time match scores
+  let candidateUser = null;
+  if (req.user && String(req.user.role || "").toUpperCase() === "APPLICANT") {
+    candidateUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { skills: true, experienceYears: true, location: true },
+    });
+  }
+
+  const mappedJobs = jobs.map((job) => {
+    const mapped = mapJob(job);
+    if (candidateUser && candidateUser.skills) {
+      mapped.skillMatch = calculateSkillMatch({
+        candidateSkills: candidateUser.skills,
+        jobSkills: mapped.skillrequired,
+        candidateExp: candidateUser.experienceYears,
+        candidateLocation: candidateUser.location,
+        jobLocation: mapped.joblocation,
+      });
+    }
+    return mapped;
+  });
+
   res.render("jobs/all-jobs", {
     title: "Browse jobs",
-    jobs: jobs.map(mapJob),
-    query: { q: search, location },
+    jobs: mappedJobs,
+    query: {
+      q: search,
+      location,
+      category,
+      skill,
+      salary: salaryBracket,
+      sort,
+    },
+    facets,
+    savedJobIds,
+    candidateUser,
   });
 });
 
@@ -93,10 +150,33 @@ export const renderJobDetails = asyncHandler(async (req, res) => {
   const job = await findPublicJobById(req.params.id);
   if (!job) throw new AppError("Job not found.", 404);
   const mapped = mapJob(job);
+  const isSaved = req.user
+    ? (await getUserSavedJobIds(req.user.id)).includes(job.id)
+    : false;
+
+  let skillMatch = null;
+  let candidateUser = null;
+  if (req.user && String(req.user.role || "").toUpperCase() === "APPLICANT") {
+    candidateUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { skills: true, experienceYears: true, location: true, headline: true },
+    });
+    skillMatch = calculateSkillMatch({
+      candidateSkills: candidateUser?.skills || "",
+      jobSkills: mapped.skillrequired,
+      candidateExp: candidateUser?.experienceYears,
+      candidateLocation: candidateUser?.location,
+      jobLocation: mapped.joblocation,
+    });
+  }
+
   res.render("jobs/job-details", {
     title: mapped.jobdesignation,
     job: mapped,
     alreadyApplied: Boolean(req.user && job.applications.some((a) => a.applicantId === req.user.id)),
+    isSaved,
+    skillMatch,
+    candidateUser,
   });
 });
 

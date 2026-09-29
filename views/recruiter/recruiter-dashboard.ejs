@@ -14,36 +14,36 @@
   </div>
 </div>
 
-<div class="stat-grid" style="margin-bottom: 28px;">
-  <div class="stat-card">
-    <span class="stat-icon" style="background: var(--brand-50); color: var(--brand-600);">
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 28px;">
+  <div class="stat-card" style="background: linear-gradient(135deg, rgba(14, 116, 214, 0.18), rgba(2, 132, 199, 0.08)); border-color: rgba(56, 189, 248, 0.3);">
+    <span class="stat-icon" style="background: linear-gradient(135deg, #0284c7, #0d9488); color: #fff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);">
       <%- icon('briefcase') %>
     </span>
     <div>
       <div class="stat-value"><%= stats.totalJobs %></div>
-      <div class="stat-label">Total jobs</div>
+      <div class="stat-label">Total Jobs</div>
     </div>
   </div>
-  <div class="stat-card">
-    <span class="stat-icon" style="background: var(--success-50); color: var(--success-600);">
+  <div class="stat-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(5, 150, 105, 0.08)); border-color: rgba(52, 211, 153, 0.3);">
+    <span class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
       <%- icon('zap') %>
     </span>
     <div>
       <div class="stat-value"><%= stats.openRoles %></div>
-      <div class="stat-label">Open roles</div>
+      <div class="stat-label">Active Roles</div>
     </div>
   </div>
-  <div class="stat-card">
-    <span class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+  <div class="stat-card" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(217, 119, 6, 0.08)); border-color: rgba(251, 191, 36, 0.3);">
+    <span class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);">
       <%- icon('users') %>
     </span>
     <div>
       <div class="stat-value"><%= stats.totalApplicants %></div>
-      <div class="stat-label">Applicants</div>
+      <div class="stat-label">Total Applicants</div>
     </div>
   </div>
-  <div class="stat-card">
-    <span class="stat-icon" style="background: rgba(219, 39, 119, 0.15); color: #db2777;">
+  <div class="stat-card" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.18), rgba(219, 39, 119, 0.08)); border-color: rgba(244, 114, 182, 0.3);">
+    <span class="stat-icon" style="background: linear-gradient(135deg, #ec4899, #db2777); color: #fff; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);">
       <%- icon('check-circle') %>
     </span>
     <div>
@@ -51,13 +51,13 @@
       <div class="stat-label">Shortlisted</div>
     </div>
   </div>
-  <div class="stat-card">
-    <span class="stat-icon" style="background: rgba(37, 99, 235, 0.15); color: #3b82f6;">
+  <div class="stat-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(79, 70, 229, 0.08)); border-color: rgba(129, 140, 248, 0.3);">
+    <span class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);">
       <%- icon('calendar') %>
     </span>
     <div>
       <div class="stat-value"><%= stats.upcomingInterviews %></div>
-      <div class="stat-label">Upcoming interviews</div>
+      <div class="stat-label">Interviews</div>
     </div>
   </div>
 </div>

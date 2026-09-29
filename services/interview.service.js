@@ -16,6 +16,9 @@ import {
 import { upsertOutbox } from "../repositories/email.repository.js";
 import { deliverQueuedEmail } from "./email-outbox.service.js";
 import { assertInterviewTransition } from "../policies/interviewTransitions.js";
+import { sendInterviewScheduledEmail } from "./email.service.js";
+import { getOrCreateChatForApplication, postChatMessage } from "./chat.service.js";
+import { env } from "../config/env.js";
 
 export const INTERVIEW_STATUSES = new Set([
   "SCHEDULED",
@@ -49,6 +52,7 @@ export const createRecruiterInterview = async ({
   meetingUrl,
   location,
   candidateMessage,
+  roundName,
 }) => {
   const application = await findOwnedApplication(recruiterId, applicationId);
   if (!application) throw new AppError("Application not found.", 404);
@@ -62,7 +66,7 @@ export const createRecruiterInterview = async ({
     throw new AppError("Interview duration must be between 15 and 240 minutes.", 400);
   }
 
-  return runInTransaction(async (tx) => {
+  const createdInterview = await runInTransaction(async (tx) => {
     const interview = await createInterview(
       recruiterId,
       {
@@ -74,6 +78,7 @@ export const createRecruiterInterview = async ({
         meetingUrl: String(meetingUrl || "").trim() || null,
         location: String(location || "").trim() || null,
         candidateMessage: String(candidateMessage || "").trim() || null,
+        roundName: String(roundName || "").trim() || "Interview Round",
       },
       tx
     );
@@ -97,7 +102,64 @@ export const createRecruiterInterview = async ({
     }
     return interview;
   });
+
+  // ── Post-transaction side-effects (email + auto-chat) ──────────────────
+  try {
+    // Count existing interviews to derive round number
+    const existingList = await listOwnedInterviews(recruiterId);
+    const appInterviews = (existingList.interviews || []).filter(
+      (iv) => iv.applicationId === applicationId
+    );
+    const roundNumber = appInterviews.length;
+
+    // 1. Send INTERVIEW_SCHEDULED email to candidate
+    await sendInterviewScheduledEmail({
+      applicant: { name: application.name, email: application.email },
+      job: application.job,
+      interview: createdInterview,
+      roundNumber,
+      appUrl: env.appUrl,
+    });
+
+    // 2. Auto-create or retrieve the Direct Chat conversation
+    const conversation = await getOrCreateChatForApplication({
+      applicationId,
+      recruiterId,
+      applicantId: application.applicantId,
+    });
+
+    // 3. Post automated system bot message into the chat
+    const formattedDate = createdInterview.scheduledAt
+      ? new Date(createdInterview.scheduledAt).toLocaleString("en-IN", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "TBD";
+    const botMessage = [
+      `📅 Interview Scheduled — ${createdInterview.roundName || `Round ${roundNumber}`} for ${application.job.designation}`,
+      `🗓 ${formattedDate} (${createdInterview.timezone || "IST"})`,
+      `⏱ Duration: ${createdInterview.durationMinutes} minutes`,
+      createdInterview.meetingUrl ? `🔗 Meeting: ${createdInterview.meetingUrl}` : null,
+      createdInterview.candidateMessage ? `\n💬 Note: ${createdInterview.candidateMessage}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    await postChatMessage({
+      conversationId: conversation.id,
+      senderId: recruiterId,
+      content: botMessage,
+    });
+  } catch (err) {
+    console.error("[interview.service] post-schedule side-effect error:", err.message);
+  }
+
+  return createdInterview;
 };
+
 
 export const updateRecruiterInterview = async ({
   recruiterId,

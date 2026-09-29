@@ -23,13 +23,13 @@
     });
 
     // Topbar icon button aria-label
-    var topbarBtn = document.getElementById("topbarThemeBtn");
-    if (topbarBtn) {
-      topbarBtn.setAttribute(
+    var topbarBtns = document.querySelectorAll(".topbar-theme-btn, #topbarThemeBtn");
+    topbarBtns.forEach(function (btn) {
+      btn.setAttribute(
         "aria-label",
         theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
       );
-    }
+    });
   }
 
   function toggleTheme() {
@@ -42,9 +42,15 @@
     applyTheme(getStoredTheme());
 
     // Topbar Sun/Moon buttons
-    var topbarBtns = document.querySelectorAll(".topbar-theme-btn, #topbarThemeBtn");
+    var topbarBtns = document.querySelectorAll(".topbar-theme-btn, #topbarThemeBtn, .theme-pill-switcher");
     topbarBtns.forEach(function (btn) {
       btn.addEventListener("click", toggleTheme);
+      btn.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggleTheme();
+        }
+      });
     });
 
     // Theme button group support ([data-theme-val])
@@ -66,6 +72,50 @@
       if (e.target && e.target.classList.contains("theme-toggle-input")) {
         var newTheme = e.target.checked ? "dark" : "light";
         applyTheme(newTheme);
+      }
+    });
+
+    // Mobile Header Navigation Drawer
+    var mobileToggle = document.getElementById("headerMobileToggle");
+    var siteNav = document.getElementById("siteNav");
+    var navBackdrop = document.getElementById("headerNavBackdrop");
+
+    function toggleMobileNav() {
+      if (!siteNav || !mobileToggle) return;
+      var isOpen = siteNav.classList.contains("is-open");
+      if (isOpen) {
+        closeMobileNav();
+      } else {
+        openMobileNav();
+      }
+    }
+
+    function openMobileNav() {
+      if (!siteNav || !mobileToggle) return;
+      siteNav.classList.add("is-open");
+      mobileToggle.classList.add("is-active");
+      mobileToggle.setAttribute("aria-expanded", "true");
+      if (navBackdrop) navBackdrop.classList.add("is-open");
+    }
+
+    function closeMobileNav() {
+      if (!siteNav || !mobileToggle) return;
+      siteNav.classList.remove("is-open");
+      mobileToggle.classList.remove("is-active");
+      mobileToggle.setAttribute("aria-expanded", "false");
+      if (navBackdrop) navBackdrop.classList.remove("is-open");
+    }
+
+    if (mobileToggle) {
+      mobileToggle.addEventListener("click", toggleMobileNav);
+    }
+    if (navBackdrop) {
+      navBackdrop.addEventListener("click", closeMobileNav);
+    }
+
+    window.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        closeMobileNav();
       }
     });
   });

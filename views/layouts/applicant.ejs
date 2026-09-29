@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="/css/shell.css" />
   <link rel="stylesheet" href="/css/recruiter.css" />
   <link rel="stylesheet" href="/css/applicant.css" />
+  <link rel="stylesheet" href="/css/confirm-modal.css" />
+  <link rel="stylesheet" href="/css/toast.css" />
 </head>
 <body class="applicant-body">
   <div class="applicant-shell">
@@ -55,7 +57,13 @@
       <span class="icon-moon"><%- icon('moon') %></span>
     </button>
     <% if (user) { %>
-    <form action="/logout" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to log out?')">
+    <form action="/logout" method="POST" style="margin:0;"
+      data-confirm="Are you sure you want to log out of your session?"
+      data-confirm-title="Log Out Confirmation"
+      data-confirm-message="You are about to log out of your Candidate Portal session. Would you like to proceed?"
+      data-confirm-action="Log Out"
+      data-confirm-variant="danger"
+      data-confirm-icon="log-out">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <button type="submit" class="topbar-btn topbar-logout-btn" title="Log out">
         <%- icon('log-out') %>
@@ -69,28 +77,39 @@
 
   <script src="/js/theme-toggle.js"></script>
   <script src="/js/confirm-modal.js"></script>
+  <script src="/js/toast.js"></script>
   <script>
     (function () {
       var sidebar = document.getElementById("applicantSidebar");
       var backdrop = document.getElementById("applicantSidebarBackdrop");
-      var openBtn = document.getElementById("applicantMobileMenuBtn");
-      var closeBtn = document.getElementById("sidebarCloseBtn");
+      var openBtns = document.querySelectorAll("#applicantMobileMenuBtn, .mobile-toggle-btn");
+      var closeBtns = document.querySelectorAll("#sidebarCloseBtn, .sidebar-close-btn");
 
-      function openSidebar() {
+      function openSidebar(e) {
+        if (e) e.preventDefault();
         if (sidebar) sidebar.classList.add("is-open");
         if (backdrop) backdrop.classList.add("is-open");
         document.body.style.overflow = "hidden";
       }
 
-      function closeSidebar() {
+      function closeSidebar(e) {
+        if (e) e.preventDefault();
         if (sidebar) sidebar.classList.remove("is-open");
         if (backdrop) backdrop.classList.remove("is-open");
         document.body.style.overflow = "";
       }
 
-      if (openBtn) openBtn.addEventListener("click", openSidebar);
-      if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
-      if (backdrop) backdrop.addEventListener("click", closeSidebar);
+      openBtns.forEach(function (btn) {
+        btn.addEventListener("click", openSidebar);
+      });
+
+      closeBtns.forEach(function (btn) {
+        btn.addEventListener("click", closeSidebar);
+      });
+
+      if (backdrop) {
+        backdrop.addEventListener("click", closeSidebar);
+      }
 
       window.addEventListener("keydown", function (e) {
         if (e.key === "Escape") closeSidebar();

@@ -22,44 +22,141 @@
       <%- icon('file-text') %> Download resume
     </a>
   </div>
-</div>
+<% if (application.skillMatch) { %>
+  <div class="panel" style="background: linear-gradient(135deg, rgba(14, 116, 214, 0.08), rgba(16, 185, 129, 0.08)); border: 1px solid var(--brand-500); border-radius: 16px; padding: 20px; margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.6rem;">🎯</span>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--color-text);">Applicant Skill Match Score</h3>
+            <span style="font-size: 0.82rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: <%= application.skillMatch.tierColor %>22; color: <%= application.skillMatch.tierColor %>; border: 1px solid <%= application.skillMatch.tierColor %>66;">
+              <%= application.skillMatch.tierLabel %>
+            </span>
+          </div>
+          <p style="margin: 2px 0 0; font-size: 0.84rem; color: var(--color-text-muted);"><%= application.skillMatch.recommendation %></p>
+        </div>
+      </div>
+      <% if (application.applicant && application.applicant.headline) { %>
+        <span style="font-size: 0.85rem; font-weight: 600; color: var(--brand-600); background: var(--color-bg-surface); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--color-border);">
+          <%= application.applicant.headline %>
+        </span>
+      <% } %>
+    </div>
+
+    <!-- Candidate Declared Skills vs Job Skills Breakdown -->
+    <div style="background: var(--color-bg-surface); border-radius: 12px; padding: 14px; border: 1px solid var(--color-border); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+      <div>
+        <span style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--color-success); display: flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+          ✓ Matched Job Skills (<%= application.skillMatch.matchedSkills.length %>)
+        </span>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <% if (application.skillMatch.matchedSkills.length === 0) { %>
+            <span style="font-size: 0.8rem; color: var(--color-text-muted);">None matched from candidate profile.</span>
+          <% } else { %>
+            <% application.skillMatch.matchedSkills.forEach(function(s) { %>
+              <span style="padding: 2px 8px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 999px; font-size: 0.8rem; font-weight: 600;">
+                ✓ <%= s %>
+              </span>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+      <div>
+        <span style="font-size: 0.76rem; font-weight: 700; text-transform: uppercase; color: var(--color-text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+          + Missing Job Skills (<%= application.skillMatch.missingSkills.length %>)
+        </span>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <% if (application.skillMatch.missingSkills.length === 0) { %>
+            <span style="font-size: 0.8rem; color: #10b981; font-weight: 600;">Candidate matches 100% of required skills.</span>
+          <% } else { %>
+            <% application.skillMatch.missingSkills.forEach(function(s) { %>
+              <span style="padding: 2px 8px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #f59e0b; border-radius: 999px; font-size: 0.8rem; font-weight: 600;">
+                + <%= s %>
+              </span>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } %>
+
+<%
+  var _st = application.status;
+  var _pct = 20; var _barColor = '#38bdf8';
+  if (_st === 'REVIEWING')                               { _pct = 40; _barColor = '#0e74d6'; }
+  if (_st === 'SHORTLISTED')                             { _pct = 60; _barColor = '#0d9488'; }
+  if (_st === 'INTERVIEW_SCHEDULED' || _st === 'INTERVIEWED') { _pct = 80; _barColor = '#6366f1'; }
+  if (_st === 'HIRED')                                   { _pct = 100; _barColor = '#10b981'; }
+  if (_st === 'REJECTED')                                { _pct = 100; _barColor = '#ef4444'; }
+%>
 
 <div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
-  <!-- Candidate & Job info panel -->
-  <section class="panel">
-    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-      <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Application Details</h2>
-      <span class="status-badge"><%= application.status.replaceAll("_", " ") %></span>
+  <!-- ── Left: Premium Application Details Card ── -->
+  <section class="panel" style="border-radius: 18px; overflow: hidden; padding: 0;">
+    <!-- Card Header -->
+    <div style="background: linear-gradient(135deg, rgba(14,116,214,0.12), rgba(13,148,136,0.12)); padding: 20px 24px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--color-border);">
+      <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #0e74d6, #0d9488); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 900; flex-shrink: 0;">
+        <%= (application.name || '?').slice(0,2).toUpperCase() %>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 1.05rem; font-weight: 800; color: var(--color-text);"><%= application.name %></div>
+        <div style="font-size: 0.78rem; color: var(--color-text-muted);">Applied <strong><%= formatDate(application.createdAt) %></strong></div>
+      </div>
+      <span style="padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; background: <%- _barColor %>22; color: <%- _barColor %>; border: 1px solid <%- _barColor %>66; flex-shrink: 0; white-space: nowrap;">
+        <%= _st === 'REJECTED' ? '✕ Rejected' : _st === 'HIRED' ? '🎉 Hired' : application.status.replaceAll('_', ' ') %>
+      </span>
     </div>
-    <dl class="detail-list" style="margin-top: 16px;">
-      <div>
-        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Full Name</dt>
-        <dd style="font-size: 0.95rem; font-weight: 600; color: var(--color-text);"><%= application.name %></dd>
+
+    <!-- Pipeline Progress Bar -->
+    <div style="padding: 14px 24px 10px; background: var(--color-bg-surface);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--color-text-muted);">Pipeline Progress</span>
+        <span style="font-size: 0.82rem; font-weight: 800; color: <%- _barColor %>;"><%= _pct %>%</span>
       </div>
-      <div>
-        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Email Address</dt>
-        <dd style="font-size: 0.95rem;"><a href="mailto:<%= application.email %>"><%= application.email %></a></dd>
+      <div style="height: 7px; background: var(--color-border); border-radius: 999px; overflow: hidden;">
+        <div style="width: <%= _pct %>%; height: 100%; background: <%- _barColor %>; border-radius: 999px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1);"></div>
       </div>
-      <div>
-        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Contact Number</dt>
-        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= application.contact %></dd>
+      <% if (_st === 'REJECTED') { %>
+        <p style="font-size: 0.74rem; color: #ef4444; font-weight: 600; margin: 6px 0 0;">⚠ Application closed — candidate not selected.</p>
+      <% } else if (_st === 'HIRED') { %>
+        <p style="font-size: 0.74rem; color: #10b981; font-weight: 600; margin: 6px 0 0;">🎉 Offer extended — candidate selected!</p>
+      <% } %>
+    </div>
+
+    <!-- Detail Rows -->
+    <div style="padding: 14px 24px 20px; display: flex; flex-direction: column; gap: 10px; background: var(--color-bg-surface);">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 10px;">
+        <span style="color: var(--brand-600, #0e74d6); flex-shrink:0; display:flex;"><%- icon('mail') %></span>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:1px;">Email</div>
+          <a href="mailto:<%= application.email %>" style="font-size:0.88rem; font-weight:600; color:var(--color-text); text-decoration:none; word-break:break-all;"><%= application.email %></a>
+        </div>
+        <button onclick="navigator.clipboard.writeText('<%= application.email %>').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='⎘',1500)})" style="background:none; border:1px solid var(--color-border); border-radius:6px; padding:3px 8px; cursor:pointer; font-size:0.75rem; color:var(--color-text-muted); flex-shrink:0;" title="Copy email">⎘</button>
       </div>
-      <div>
-        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Applied On</dt>
-        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= formatDate(application.createdAt) %></dd>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 10px;">
+        <span style="color: var(--brand-600, #0e74d6); flex-shrink:0; display:flex;"><%- icon('phone') %></span>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:1px;">Phone</div>
+          <a href="tel:<%= application.contact %>" style="font-size:0.88rem; font-weight:600; color:var(--color-text); text-decoration:none;"><%= application.contact %></a>
+        </div>
+        <button onclick="navigator.clipboard.writeText('<%= application.contact %>').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='⎘',1500)})" style="background:none; border:1px solid var(--color-border); border-radius:6px; padding:3px 8px; cursor:pointer; font-size:0.75rem; color:var(--color-text-muted); flex-shrink:0;" title="Copy phone">⎘</button>
       </div>
-      <div>
-        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Role</dt>
-        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= application.job.designation %></dd>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div style="padding:10px 12px; background:var(--color-bg); border:1px solid var(--color-border); border-radius:10px;">
+          <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:2px;">Role</div>
+          <div style="font-size:0.88rem; font-weight:700; color:var(--color-text); word-break:break-word;"><%= application.job.designation %></div>
+        </div>
+        <div style="padding:10px 12px; background:var(--color-bg); border:1px solid var(--color-border); border-radius:10px;">
+          <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:2px;">Company</div>
+          <div style="font-size:0.88rem; font-weight:700; color:var(--color-text);"><%= application.job.companyName %></div>
+        </div>
       </div>
-      <div>
-        <dt style="font-size: 0.8rem; font-weight: 600; color: var(--color-text-subtle); text-transform: uppercase;">Company</dt>
-        <dd style="font-size: 0.95rem; color: var(--color-text);"><%= application.job.companyName %></dd>
-      </div>
-    </dl>
+    </div>
   </section>
 
-  <!-- Recruiter Status & Note review -->
+  <!-- ── Right: Recruiter Review & Status ── -->
   <section class="panel">
     <div class="panel-header">
       <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Recruiter Review & Status</h2>
@@ -99,6 +196,7 @@
   </section>
 </div>
 
+
 <!-- Schedule new interview panel -->
 <section class="panel" style="margin-bottom: 24px;">
   <div class="panel-header">
@@ -108,6 +206,16 @@
   <form action="/recruiter/applicants/<%= application.id %>/interviews" method="POST" style="margin-top: 16px;" data-confirm data-confirm-title="Schedule Interview" data-confirm-message="Schedule an interview session for <%= application.name %>?" data-confirm-action="Schedule Interview" data-confirm-variant="primary">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
     <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+      <div>
+        <label for="roundName" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Round Name</label>
+        <select id="roundName" name="roundName" required style="width: 100%;">
+          <option value="Initial Screening">Initial Screening</option>
+          <option value="Technical Round">Technical Round</option>
+          <option value="HR Round">HR Round</option>
+          <option value="Managerial Round">Managerial Round</option>
+          <option value="Final Interview">Final Interview</option>
+        </select>
+      </div>
       <div>
         <label for="scheduledAt" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 4px;">Date and Time</label>
         <input id="scheduledAt" type="datetime-local" name="scheduledAt" required style="width: 100%;" />
@@ -151,7 +259,7 @@
       <div style="background: var(--color-bg); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; margin-top: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
           <div>
-            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-600);">Round <%= application.interviews.length - idx %></span>
+            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-600);"><%= interview.roundName || `Round ${application.interviews.length - idx}` %></span>
             <h3 style="font-size: 1.05rem; font-weight: 700; margin: 2px 0 4px;">
               <%= formatDate(interview.scheduledAt) %> <span style="font-weight: normal; color: var(--color-text-muted); font-size: 0.9rem;">(<%= interview.timezone %>, <%= interview.durationMinutes %>m)</span>
             </h3>

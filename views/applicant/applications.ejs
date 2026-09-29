@@ -2,54 +2,76 @@
   <div>
     <span class="eyebrow">Candidate Portal</span>
     <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">My Applications</h1>
-    <p class="subtitle" style="margin: 0; color: var(--app-text-muted);">Track your job application statuses, interviews, and direct messages.</p>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">
+      <%= applications ? applications.length : 0 %> active application<%= (applications && applications.length === 1) ? '' : 's' %> tracked across hiring pipelines.
+    </p>
+  </div>
+  <div>
+    <a href="/jobs" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <%- icon('search') %> Explore more jobs
+    </a>
   </div>
 </div>
 
 <% if (!applications || applications.length === 0) { %>
-  <div class="empty-state">
-    <%- icon('briefcase', 'icon-xl') %>
-    <h3>No applications submitted yet</h3>
-    <p>Browse open job roles and submit your resume to start receiving recruiter updates.</p>
-    <a href="/jobs" class="btn btn-primary btn-sm" style="margin-top: 12px;">Browse open jobs</a>
-  </div>
+  <%- include('../partials/shell/empty-state', {
+    emptyIcon: 'inbox',
+    emptyTitle: 'No applications submitted yet',
+    emptySubtitle: 'Browse open positions on the job board and submit your resume to start tracking your recruitment status here.'
+  }) %>
 <% } else { %>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Job Role</th>
-          <th>Company</th>
-          <th>Location</th>
-          <th>Status</th>
-          <th>Applied Date</th>
-          <th style="text-align: right;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% applications.forEach(function (app) { %>
+  <div class="panel" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow-sm);">
+    <div class="table-wrap">
+      <table>
+        <thead>
           <tr>
-            <td style="font-weight: 600;">
-              <a href="/jobs/<%= app.job.id %>"><%= app.job.designation %></a>
-            </td>
-            <td><%= app.job.companyName %></td>
-            <td><%= app.job.location %></td>
-            <td>
-              <span class="status-badge">
-                <%= app.status.replaceAll("_", " ") %>
-              </span>
-            </td>
-            <td><%= formatDate(app.createdAt) %></td>
-            <td style="text-align: right;">
-              <% if (app.conversation) { %>
-                <a href="/messages/<%= app.conversation.id %>" class="btn btn-secondary btn-sm">
-                  <%- icon('message-square') %> Chat
-                </a>
-              <% } %>
-            </td>
+            <th>Job Role</th>
+            <th>Company</th>
+            <th>Location</th>
+            <th>Stage / Status</th>
+            <th>Applied Date</th>
+            <th style="text-align: right;">Action</th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          <% applications.forEach(function (app) { %>
+            <% const statusLower = (app.status || 'new').toLowerCase(); %>
+            <tr>
+              <td style="font-weight: 600;">
+                <a href="/applicant/applications/<%= app.id %>" style="color: var(--color-text); text-decoration: none; font-weight: 700;">
+                  <%= app.job.designation %>
+                </a>
+              </td>
+              <td>
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                  <%- icon('building') %> <%= app.job.companyName %>
+                </span>
+              </td>
+              <td><%= app.job.location %></td>
+              <td>
+                <span class="status-badge status-<%= statusLower %>">
+                  <%= app.status.replaceAll("_", " ") %>
+                </span>
+              </td>
+              <td style="font-size: 0.88rem; color: var(--color-text-muted);">
+                <%= formatDate(app.createdAt) %>
+              </td>
+              <td style="text-align: right;">
+                <div style="display: inline-flex; gap: 8px; align-items: center;">
+                  <a href="/applicant/applications/<%= app.id %>" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 4px;" title="View visual pipeline timeline">
+                    <%- icon('layers') %> Track Status
+                  </a>
+                  <% if (app.conversation) { %>
+                    <a href="/messages/<%= app.conversation.id %>" class="btn btn-ghost btn-sm" style="display: inline-flex; align-items: center; gap: 4px;" title="Chat with recruiter">
+                      <%- icon('message-square') %> Chat
+                    </a>
+                  <% } %>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
   </div>
 <% } %>

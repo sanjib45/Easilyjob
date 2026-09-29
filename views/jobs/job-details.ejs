@@ -26,8 +26,119 @@
         <button type="submit" class="btn btn-danger btn-sm"><%- icon('trash') %> Delete</button>
       </form>
     </div>
+  <% } else if (user && user.role?.toUpperCase() === "APPLICANT") { %>
+    <div class="card-actions">
+      <% if (typeof isSaved !== 'undefined' && isSaved) { %>
+        <form action="/applicant/saved/<%= job.id %>/remove" method="POST" class="inline-form" style="margin:0;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="btn btn-ghost btn-sm" title="Remove from saved jobs" style="color:var(--brand-600); background:var(--brand-50); border:1px solid var(--brand-200); display:inline-flex; align-items:center; gap:6px;">
+            <%- icon('bookmark-filled') %>
+            <span>Saved Job</span>
+          </button>
+        </form>
+      <% } else { %>
+        <form action="/applicant/saved/<%= job.id %>" method="POST" class="inline-form" style="margin:0;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="btn btn-secondary btn-sm" title="Save this job" style="display:inline-flex; align-items:center; gap:6px;">
+            <%- icon('bookmark') %>
+            <span>Save Job</span>
+          </button>
+        </form>
+      <% } %>
+    </div>
+  <% } else if (!user) { %>
+    <div class="card-actions">
+      <a href="/login?redirect=/jobs/<%= job.id %>" class="btn btn-secondary btn-sm" title="Sign in to save job" style="display:inline-flex; align-items:center; gap:6px;">
+        <%- icon('bookmark') %>
+        <span>Save Job</span>
+      </a>
+    </div>
   <% } %>
-</div>
+<% if (typeof skillMatch !== 'undefined' && skillMatch) { %>
+  <!-- Naukri-Style Real-Time Skill Match Scorecard -->
+  <div class="panel" style="background: linear-gradient(135deg, rgba(14, 116, 214, 0.10), rgba(16, 185, 129, 0.10)); border: 1px solid var(--brand-500); border-radius: 18px; padding: 22px; margin-bottom: 24px; box-shadow: 0 8px 24px rgba(14, 116, 214, 0.08); backdrop-filter: blur(12px);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="width: 44px; height: 44px; border-radius: 12px; background: <%= skillMatch.score >= 80 ? 'linear-gradient(135deg, #10b981, #059669)' : (skillMatch.score >= 50 ? 'linear-gradient(135deg, #0e74d6, #0284c7)' : 'linear-gradient(135deg, #f59e0b, #d97706)') %>; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; box-shadow: 0 4px 14px rgba(0,0,0,0.15);">
+          🎯
+        </span>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--color-text);">How You Match With This Role</h3>
+            <span style="font-size: 0.85rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: <%= skillMatch.tierColor %>22; color: <%= skillMatch.tierColor %>; border: 1px solid <%= skillMatch.tierColor %>66;">
+              <%= skillMatch.tierLabel %>
+            </span>
+          </div>
+          <p style="margin: 3px 0 0; font-size: 0.84rem; color: var(--color-text-muted);">
+            <%= skillMatch.recommendation %>
+          </p>
+        </div>
+      </div>
+      <div>
+        <a href="/applicant/profile" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem;">
+          <%- icon('edit') %> Update Skills & Profile
+        </a>
+      </div>
+    </div>
+
+    <!-- Skill Matrix Comparison Breakdown -->
+    <div style="background: var(--color-bg-surface); border-radius: 14px; padding: 16px; border: 1px solid var(--color-border);">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <!-- Matched Skills -->
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--color-success); display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+            <span style="display:inline-flex; width:16px; height:16px; background:rgba(16, 185, 129, 0.2); border-radius:50%; align-items:center; justify-content:center; font-size:0.65rem;">✓</span>
+            Matched Skills (<%= skillMatch.matchedSkills.length %>/<%= skillMatch.requiredCount %>)
+          </span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <% if (skillMatch.matchedSkills.length === 0) { %>
+              <span style="font-size: 0.82rem; color: var(--color-text-muted); font-style: italic;">No required skills matching your current profile.</span>
+            <% } else { %>
+              <% skillMatch.matchedSkills.forEach(function(s) { %>
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 999px; font-size: 0.82rem; font-weight: 600;">
+                  ✓ <%= s %>
+                </span>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Missing Skills -->
+        <div>
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--color-text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+            <span style="display:inline-flex; width:16px; height:16px; background:rgba(120, 140, 160, 0.2); border-radius:50%; align-items:center; justify-content:center; font-size:0.65rem;">+</span>
+            Missing / Recommended Skills (<%= skillMatch.missingSkills.length %>)
+          </span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <% if (skillMatch.missingSkills.length === 0) { %>
+              <span style="font-size: 0.82rem; color: #10b981; font-weight: 600;">🎉 None! You possess all required technical skills for this job.</span>
+            <% } else { %>
+              <% skillMatch.missingSkills.forEach(function(s) { %>
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #f59e0b; border-radius: 999px; font-size: 0.82rem; font-weight: 600;">
+                  + <%= s %>
+                </span>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } else if (!user) { %>
+  <!-- Guest Prompt for Match Score -->
+  <div class="panel" style="background: var(--color-bg-surface); border: 1px dashed var(--color-border); border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 1.5rem;">🎯</span>
+      <div>
+        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Check Your Skill Match Score</h4>
+        <p style="margin: 2px 0 0; font-size: 0.82rem; color: var(--color-text-muted);">Log in or create your candidate profile to see how your skillset scores against this role.</p>
+      </div>
+    </div>
+    <a href="/login?redirect=/jobs/<%= job.id %>" class="btn btn-secondary btn-sm">
+      Sign In & Match
+    </a>
+  </div>
+<% } %>
 
 <div class="detail-grid">
   <div class="panel">

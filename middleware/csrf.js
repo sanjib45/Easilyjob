@@ -19,7 +19,7 @@ const SAFE = new Set(["GET", "HEAD", "OPTIONS"]);
 export const verifyCsrfToken = (req, res, next) => {
   if (SAFE.has(req.method)) return next();
   const cookieToken = req.cookies[CSRF_COOKIE];
-  const bodyToken = req.body?._csrf;
+  const bodyToken = req.body?._csrf || req.headers["x-csrf-token"];
   if (cookieToken && bodyToken) {
     const a = Buffer.from(cookieToken);
     const b = Buffer.from(bodyToken);

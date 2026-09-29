@@ -68,6 +68,41 @@ const templates = {
       <p>${escapeHtml(nextStep)}</p>
       <p style="color:#64748b;">— Easily Jobs</p>`,
   }),
+  INTERVIEW_SCHEDULED: ({ applicantName, jobTitle, companyName, scheduledAt, timezone, durationMinutes, meetingUrl, location, candidateMessage, roundNumber, portalUrl }) => ({
+    subject: `Interview Scheduled — ${jobTitle} at ${companyName}`,
+    text: `Hi ${applicantName},\n\nYour interview for "${jobTitle}" at ${companyName} has been scheduled.\n\nDate & Time: ${scheduledAt}\nTimezone: ${timezone}\nDuration: ${durationMinutes} minutes\n${meetingUrl ? `Meeting Link: ${meetingUrl}` : location ? `Location: ${location}` : ''}\n${candidateMessage ? `\nMessage from Recruiter:\n${candidateMessage}` : ''}\n\nLog in to your Easily Jobs portal to track your application status.\n\n— ${companyName} Hiring Team`,
+    html: `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 24px;">
+      <div style="background: linear-gradient(135deg, #0e74d6 0%, #0d9488 100%); border-radius: 16px 16px 0 0; padding: 32px 32px 24px; text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 8px;">📅</div>
+        <h1 style="color: #fff; margin: 0 0 4px; font-size: 1.5rem; font-weight: 800;">Interview Scheduled</h1>
+        <p style="color: rgba(255,255,255,0.85); margin: 0; font-size: 0.95rem;">${escapeHtml(jobTitle)} &middot; ${escapeHtml(companyName)}</p>
+      </div>
+      <div style="background: #ffffff; border-radius: 0 0 16px 16px; padding: 32px; border: 1px solid #e2e8f0; border-top: none;">
+        <p style="color: #334155; font-size: 1rem; margin: 0 0 24px;">Hi <strong>${escapeHtml(applicantName)}</strong>,</p>
+        <p style="color: #475569; margin: 0 0 24px;">Great news! Your interview for <strong>${escapeHtml(jobTitle)}</strong> at <strong>${escapeHtml(companyName)}</strong> has been confirmed. Here are the details:</p>
+
+        ${roundNumber ? `<div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;"><span style="font-size: 1.2rem;">🔁</span> <strong style="color: #1d4ed8;">Round ${escapeHtml(String(roundNumber))}</strong></div>` : ''}
+
+        <div style="background: #f1f5f9; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; width: 40%;">Date &amp; Time</td><td style="padding: 8px 0; color: #0f172a; font-weight: 700;">${escapeHtml(scheduledAt)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Timezone</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${escapeHtml(timezone)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Duration</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${escapeHtml(String(durationMinutes))} minutes</td></tr>
+            ${location ? `<tr><td style="padding: 8px 0; color: #64748b; font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">Location</td><td style="padding: 8px 0; color: #0f172a; font-weight: 600;">${escapeHtml(location)}</td></tr>` : ''}
+          </table>
+        </div>
+
+        ${meetingUrl ? `<div style="text-align: center; margin-bottom: 24px;"><a href="${escapeHtml(meetingUrl)}" style="display: inline-block; background: linear-gradient(135deg, #0e74d6, #0d9488); color: #fff; font-weight: 800; font-size: 1rem; text-decoration: none; padding: 14px 32px; border-radius: 10px; box-shadow: 0 4px 14px rgba(13,148,136,0.35);">🎥 Join Video Meeting</a></div>` : ''}
+
+        ${candidateMessage ? `<div style="background: #f0fdfa; border-left: 4px solid #0d9488; padding: 14px 18px; border-radius: 0 8px 8px 0; margin-bottom: 24px;"><p style="margin: 0 0 4px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #0d9488;">Message from Recruiter</p><p style="margin: 0; color: #1e293b; font-size: 0.95rem; white-space: pre-wrap;">${escapeHtml(candidateMessage)}</p></div>` : ''}
+
+        ${portalUrl ? `<div style="text-align: center; padding-top: 16px; border-top: 1px solid #e2e8f0;"><a href="${escapeHtml(portalUrl)}" style="color: #0e74d6; font-weight: 600; font-size: 0.9rem; text-decoration: none;">📊 Track Application Status →</a></div>` : ''}
+
+        <p style="color: #94a3b8; font-size: 0.82rem; text-align: center; margin: 20px 0 0;">Best of luck! — <strong>${escapeHtml(companyName)}</strong> Hiring Team via Easily Jobs</p>
+      </div>
+    </div>`,
+  }),
   INTERVIEW_RESULT: ({ applicantName, jobTitle, companyName, outcome, summary }) => ({
     subject: `Interview Result — ${jobTitle} at ${companyName}`,
     text: `Hi ${applicantName},\n\nYour interview result for "${jobTitle}" at ${companyName} is: ${outcome}.\n\nFeedback Summary:\n${summary}\n\n— ${companyName} Hiring Team`,
@@ -172,5 +207,40 @@ export const sendPasswordResetEmail = async (user, resetToken, appUrl = env.appU
     console.warn(`[email ${result.status}] Password Reset URL: ${resetUrl}`);
   }
   return result;
+};
+
+/**
+ * Sends the INTERVIEW_SCHEDULED rich HTML email to a candidate.
+ * Formats the scheduledAt Date into a human-readable string before sending.
+ */
+export const sendInterviewScheduledEmail = async ({ applicant, job, interview, roundNumber, appUrl = env.appUrl }) => {
+  const formattedDate = interview.scheduledAt
+    ? new Date(interview.scheduledAt).toLocaleString("en-IN", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "To be confirmed";
+
+  return sendEmail({
+    to: applicant.email,
+    type: "INTERVIEW_SCHEDULED",
+    data: {
+      applicantName: applicant.name,
+      jobTitle: job.designation,
+      companyName: job.companyName,
+      scheduledAt: formattedDate,
+      timezone: interview.timezone || "IST",
+      durationMinutes: interview.durationMinutes,
+      meetingUrl: interview.meetingUrl || null,
+      location: interview.location || null,
+      candidateMessage: interview.candidateMessage || null,
+      roundNumber: roundNumber || null,
+      portalUrl: `${(appUrl || "").replace(/\/$/, "")}/applicant/applications`,
+    },
+  });
 };
 

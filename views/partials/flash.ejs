@@ -1,14 +1,30 @@
 <% if (typeof messages !== "undefined") { %>
-  <% (messages.error || []).forEach(function (msg) { %>
-    <div class="alert alert-error">
-      <%- icon('alert-circle') %>
-      <span><%= msg %></span>
-    </div>
-  <% }) %>
-  <% (messages.success || []).forEach(function (msg) { %>
-    <div class="alert alert-success">
-      <%- icon('check-circle') %>
-      <span><%= msg %></span>
-    </div>
-  <% }) %>
+  <div class="flash-messages-data" style="display: none;" aria-hidden="true">
+    <% (messages.error || []).forEach(function (msg) { %>
+      <div data-toast-type="error" data-toast-msg="<%= msg %>"></div>
+    <% }) %>
+    <% (messages.success || []).forEach(function (msg) { %>
+      <div data-toast-type="success" data-toast-msg="<%= msg %>"></div>
+    <% }) %>
+    <% (messages.info || []).forEach(function (msg) { %>
+      <div data-toast-type="info" data-toast-msg="<%= msg %>"></div>
+    <% }) %>
+    <% (messages.warning || []).forEach(function (msg) { %>
+      <div data-toast-type="warning" data-toast-msg="<%= msg %>"></div>
+    <% }) %>
+  </div>
+  <noscript>
+    <% (messages.error || []).forEach(function (msg) { %>
+      <div class="alert alert-error">
+        <%- icon('alert-circle') %>
+        <span><%= msg %></span>
+      </div>
+    <% }) %>
+    <% (messages.success || []).forEach(function (msg) { %>
+      <div class="alert alert-success">
+        <%- icon('check-circle') %>
+        <span><%= msg %></span>
+      </div>
+    <% }) %>
+  </noscript>
 <% } %>

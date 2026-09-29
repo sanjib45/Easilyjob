@@ -1,0 +1,513 @@
+<div class="chatbot-wrapper" style="max-width: 780px; margin: 0 auto; background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 20px; box-shadow: var(--shadow-lg); overflow: hidden; display: flex; flex-direction: column; min-height: 650px;">
+  
+  <!-- ── Chatbot Top Header ── -->
+  <div class="chatbot-header" style="background: linear-gradient(135deg, var(--brand-700), #0f172a); color: #fff; padding: 18px 24px; position: relative;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+          🤖
+        </div>
+        <div>
+          <div style="font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; display: flex; align-items: center; gap: 6px;">
+            EasilyJob Assistant
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+          </div>
+          <p style="margin: 2px 0 0; font-size: 0.8rem; color: rgba(255,255,255,0.75);">Instant AI profile creation & matching roles</p>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span id="stepProgressLabel" style="font-size: 0.78rem; font-weight: 700; color: var(--brand-200); text-transform: uppercase; letter-spacing: 0.05em;">Step 1 of 5</span>
+        <div style="font-size: 0.82rem; font-weight: 800; color: #fff;" id="stepProgressPercent">20%</div>
+      </div>
+    </div>
+
+    <!-- Animated Progress Bar -->
+    <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-top: 14px; overflow: hidden;">
+      <div id="progressBarFill" style="width: 20%; height: 100%; background: linear-gradient(90deg, var(--brand-400), #38bdf8); transition: width 0.4s ease;"></div>
+    </div>
+  </div>
+
+  <!-- ── Chat Conversation Thread ── -->
+  <div id="chatStream" style="flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; background: var(--color-bg); scroll-behavior: smooth; min-height: 440px;">
+    <!-- Messages injected dynamically via JS -->
+  </div>
+
+  <!-- ── Bottom Footer / Back to Standard Form ── -->
+  <div class="chatbot-footer" style="padding: 12px 24px; background: var(--color-bg-surface); border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+    <span style="color: var(--color-text-muted);">
+      Prefer a standard form? <a href="/register" style="color: var(--brand-600); font-weight: 600;">Classic Sign Up</a>
+    </span>
+    <a href="/login" style="color: var(--color-text-muted); text-decoration: none;">Already registered? <strong style="color: var(--brand-600);">Log in</strong></a>
+  </div>
+</div>
+
+<style>
+  .chat-msg {
+    display: flex;
+    gap: 12px;
+    max-width: 88%;
+    animation: fadeIn 0.3s ease;
+  }
+  .chat-msg.bot {
+    align-self: flex-start;
+  }
+  .chat-msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+  .chat-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+  .chat-msg.bot .chat-bubble {
+    background: var(--color-bg-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow-xs);
+  }
+  .chat-msg.user .chat-bubble {
+    background: var(--brand-600);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .bot-avatar {
+    background: #0f172a;
+    color: #fff;
+  }
+  .user-avatar-bubble {
+    background: var(--brand-600);
+    color: #fff;
+  }
+
+  .interactive-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .chip-btn {
+    background: var(--color-bg-surface);
+    border: 1.5px solid var(--color-border);
+    color: var(--color-text);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+  }
+  .chip-btn:hover {
+    border-color: var(--brand-500);
+    background: var(--brand-50);
+    color: var(--brand-700);
+    transform: translateY(-1px);
+  }
+  .chip-btn.selected {
+    background: var(--brand-600);
+    border-color: var(--brand-600);
+    color: #fff;
+  }
+
+  .typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    width: fit-content;
+  }
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--color-text-muted);
+    border-radius: 50%;
+    animation: typingBounce 1.3s infinite ease-in-out;
+  }
+  .typing-dot:nth-child(1) { animation-delay: 0s; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typingBounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script>
+  (function () {
+    const csrfToken = "<%= csrfToken %>";
+    const chatStream = document.getElementById("chatStream");
+    const progressBarFill = document.getElementById("progressBarFill");
+    const stepProgressLabel = document.getElementById("stepProgressLabel");
+    const stepProgressPercent = document.getElementById("stepProgressPercent");
+
+    const answers = {
+      experienceLevel: "",
+      preferredDomain: "",
+      skills: [],
+      preferredLocation: "",
+      name: "",
+      email: "",
+      password: ""
+    };
+
+    function updateProgress(step, total, label) {
+      const pct = Math.round((step / total) * 100);
+      progressBarFill.style.width = pct + "%";
+      stepProgressLabel.textContent = label || `Step ${step} of ${total}`;
+      stepProgressPercent.textContent = pct + "%";
+    }
+
+    function scrollToBottom() {
+      setTimeout(() => {
+        chatStream.scrollTop = chatStream.scrollHeight;
+      }, 50);
+    }
+
+    function showTypingIndicator() {
+      const typingDiv = document.createElement("div");
+      typingDiv.id = "activeTypingIndicator";
+      typingDiv.className = "chat-msg bot";
+      typingDiv.innerHTML = `
+        <div class="chat-avatar bot-avatar">🤖</div>
+        <div class="typing-indicator">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      `;
+      chatStream.appendChild(typingDiv);
+      scrollToBottom();
+    }
+
+    function removeTypingIndicator() {
+      const el = document.getElementById("activeTypingIndicator");
+      if (el) el.remove();
+    }
+
+    function appendBotMessage(htmlContent, delay = 500) {
+      return new Promise((resolve) => {
+        showTypingIndicator();
+        setTimeout(() => {
+          removeTypingIndicator();
+          const msgDiv = document.createElement("div");
+          msgDiv.className = "chat-msg bot";
+          msgDiv.innerHTML = `
+            <div class="chat-avatar bot-avatar">🤖</div>
+            <div class="chat-bubble">${htmlContent}</div>
+          `;
+          chatStream.appendChild(msgDiv);
+          scrollToBottom();
+          resolve();
+        }, delay);
+      });
+    }
+
+    function appendUserMessage(text) {
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "chat-msg user";
+      msgDiv.innerHTML = `
+        <div class="chat-avatar user-avatar-bubble">👤</div>
+        <div class="chat-bubble">${text}</div>
+      `;
+      chatStream.appendChild(msgDiv);
+      scrollToBottom();
+    }
+
+    // ── STEP 1: Experience Level ──
+    async function initStep1() {
+      updateProgress(1, 5, "Step 1 of 5: Experience");
+      await appendBotMessage(`
+        <strong>Welcome to EasilyJob Quick Apply! 👋</strong><br/>
+        Let's match you with top job opportunities in less than 60 seconds.<br/><br/>
+        What is your current work experience status?
+        <div class="interactive-chips-container" id="step1Chips">
+          <button type="button" class="chip-btn" data-val="Experienced">💼 Experienced Professional</button>
+          <button type="button" class="chip-btn" data-val="Fresher">🎓 Fresher / Student</button>
+        </div>
+      `, 400);
+
+      document.getElementById("step1Chips").addEventListener("click", (e) => {
+        const btn = e.target.closest(".chip-btn");
+        if (!btn) return;
+        answers.experienceLevel = btn.getAttribute("data-val");
+        appendUserMessage(btn.textContent.trim());
+        document.getElementById("step1Chips").remove();
+        initStep2();
+      });
+    }
+
+    // ── STEP 2: Preferred Domain ──
+    async function initStep2() {
+      updateProgress(2, 5, "Step 2 of 5: Target Role");
+      await appendBotMessage(`
+        Great! What domain or role category are you aiming for?
+        <div class="interactive-chips-container" id="step2Chips">
+          <button type="button" class="chip-btn" data-val="Technology">💻 Software & Engineering</button>
+          <button type="button" class="chip-btn" data-val="Design">🎨 UI/UX & Product Design</button>
+          <button type="button" class="chip-btn" data-val="Marketing">📈 Marketing & Growth</button>
+          <button type="button" class="chip-btn" data-val="Finance">📊 Finance & Operations</button>
+          <button type="button" class="chip-btn" data-val="Management">💼 Product & Management</button>
+        </div>
+      `, 500);
+
+      document.getElementById("step2Chips").addEventListener("click", (e) => {
+        const btn = e.target.closest(".chip-btn");
+        if (!btn) return;
+        answers.preferredDomain = btn.getAttribute("data-val");
+        appendUserMessage(btn.textContent.trim());
+        document.getElementById("step2Chips").remove();
+        initStep3();
+      });
+    }
+
+    // ── STEP 3: Multi-Select Key Skills ──
+    async function initStep3() {
+      updateProgress(3, 5, "Step 3 of 5: Key Skills");
+      const suggestedSkills = [
+        "React", "Node.js", "JavaScript", "TypeScript", "Python", 
+        "Java", "SQL", "MongoDB", "Docker", "AWS", "Figma", "UI/UX", "Git"
+      ];
+
+      const chipsHtml = suggestedSkills
+        .map(sk => `<button type="button" class="chip-btn skill-chip" data-skill="${sk}">+ ${sk}</button>`)
+        .join("");
+
+      await appendBotMessage(`
+        Select your top technical skills (tap to select multiple):
+        <div class="interactive-chips-container" id="step3Skills">
+          ${chipsHtml}
+        </div>
+        <div style="margin-top: 14px;">
+          <button type="button" class="btn btn-primary btn-sm" id="confirmSkillsBtn" style="display: none; padding: 6px 16px;">
+            Continue with Selected Skills (<span id="skillCount">0</span>) →
+          </button>
+        </div>
+      `, 500);
+
+      const container = document.getElementById("step3Skills");
+      const confirmBtn = document.getElementById("confirmSkillsBtn");
+      const countSpan = document.getElementById("skillCount");
+      const selected = new Set();
+
+      container.addEventListener("click", (e) => {
+        const btn = e.target.closest(".skill-chip");
+        if (!btn) return;
+        const sk = btn.getAttribute("data-skill");
+        if (selected.has(sk)) {
+          selected.delete(sk);
+          btn.classList.remove("selected");
+          btn.textContent = `+ ${sk}`;
+        } else {
+          selected.add(sk);
+          btn.classList.add("selected");
+          btn.textContent = `✓ ${sk}`;
+        }
+        countSpan.textContent = selected.size;
+        confirmBtn.style.display = selected.size > 0 ? "inline-block" : "none";
+      });
+
+      confirmBtn.addEventListener("click", () => {
+        answers.skills = Array.from(selected);
+        appendUserMessage(`Selected Skills: ${answers.skills.join(", ")}`);
+        container.parentElement.remove();
+        initStep4();
+      });
+    }
+
+    // ── STEP 4: Preferred Location ──
+    async function initStep4() {
+      updateProgress(4, 5, "Step 4 of 5: Location");
+      await appendBotMessage(`
+        Where would you prefer to work?
+        <div class="interactive-chips-container" id="step4Location">
+          <button type="button" class="chip-btn" data-val="Remote">🌐 Remote / Work from Home</button>
+          <button type="button" class="chip-btn" data-val="Bangalore">🏙️ Bangalore</button>
+          <button type="button" class="chip-btn" data-val="Mumbai">🏙️ Mumbai</button>
+          <button type="button" class="chip-btn" data-val="Delhi/NCR">🏙️ Delhi / NCR</button>
+          <button type="button" class="chip-btn" data-val="Pune">🏙️ Pune</button>
+          <button type="button" class="chip-btn" data-val="Hyderabad">🏙️ Hyderabad</button>
+        </div>
+      `, 500);
+
+      document.getElementById("step4Location").addEventListener("click", (e) => {
+        const btn = e.target.closest(".chip-btn");
+        if (!btn) return;
+        answers.preferredLocation = btn.getAttribute("data-val");
+        appendUserMessage(btn.textContent.trim());
+        document.getElementById("step4Location").remove();
+        initStep5();
+      });
+    }
+
+    // ── STEP 5: Candidate Identity & Instant Account Creation ──
+    async function initStep5() {
+      updateProgress(5, 5, "Final Step: Profile Setup");
+      await appendBotMessage(`
+        Almost done! Enter your details below to create your candidate account and view your instant job matches:
+        <div id="quickFormCard" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 16px; margin-top: 12px;">
+          <div id="formAlertBox" style="display:none; margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; font-size: 0.88rem; background: var(--danger-50); color: var(--danger-700); border: 1px solid var(--danger-500);"></div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--color-text);">Full Name</label>
+            <input type="text" id="botName" placeholder="e.g. John Doe" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); box-sizing: border-box; font-family: inherit;" required />
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <label style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--color-text);">Email Address</label>
+            <input type="email" id="botEmail" placeholder="e.g. john@example.com" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); box-sizing: border-box; font-family: inherit;" required />
+          </div>
+
+          <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--color-text);">Create Password (min 8 chars)</label>
+            <input type="password" id="botPassword" placeholder="••••••••" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); box-sizing: border-box; font-family: inherit;" required minlength="8" />
+          </div>
+
+          <button type="button" id="submitQuickApplyBtn" class="btn btn-primary btn-block btn-lg" style="width: 100%; font-weight: 700;">
+            🚀 Complete Profile & View Matching Jobs
+          </button>
+        </div>
+      `, 600);
+
+      document.getElementById("submitQuickApplyBtn").addEventListener("click", submitQuickRegistration);
+    }
+
+    async function submitQuickRegistration() {
+      const nameInput = document.getElementById("botName");
+      const emailInput = document.getElementById("botEmail");
+      const passInput = document.getElementById("botPassword");
+      const alertBox = document.getElementById("formAlertBox");
+      const submitBtn = document.getElementById("submitQuickApplyBtn");
+
+      alertBox.style.display = "none";
+
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passInput.value;
+
+      if (!name || !email || !password) {
+        alertBox.textContent = "Please fill in all fields.";
+        alertBox.style.display = "block";
+        return;
+      }
+
+      if (password.length < 8) {
+        alertBox.textContent = "Password must be at least 8 characters long.";
+        alertBox.style.display = "block";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating Account & Matching Jobs...";
+
+      try {
+        const response = await fetch("/api/quick-apply/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            _csrf: csrfToken,
+            name,
+            email,
+            password,
+            skills: answers.skills,
+            preferredLocation: answers.preferredLocation,
+            preferredDomain: answers.preferredDomain,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          alertBox.textContent = data.error || "Failed to register. Please try again.";
+          alertBox.style.display = "block";
+          submitBtn.disabled = false;
+          submitBtn.textContent = "🚀 Complete Profile & View Matching Jobs";
+          return;
+        }
+
+        // Success!
+        document.getElementById("quickFormCard").remove();
+        appendUserMessage(`Registered as ${name} (${email})`);
+
+        updateProgress(5, 5, "🎉 Profile Created!");
+        showMatches(data.matches, name);
+
+      } catch (err) {
+        alertBox.textContent = "Network error. Please try again.";
+        alertBox.style.display = "block";
+        submitBtn.disabled = false;
+        submitBtn.textContent = "🚀 Complete Profile & View Matching Jobs";
+      }
+    }
+
+    // ── STEP 6: Instant Gratification - Job Recommendations Carousel ──
+    async function showMatches(matches, candidateName) {
+      let cardsHtml = "";
+      if (matches && matches.length > 0) {
+        cardsHtml = matches.map(m => `
+          <div class="card" style="background: var(--color-bg-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 14px; min-width: 260px; max-width: 300px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                <h4 style="margin: 0; font-size: 0.98rem; font-weight: 700; color: var(--color-text);">${m.designation}</h4>
+                <span style="background: rgba(16, 185, 129, 0.12); color: #10b981; font-size: 0.75rem; font-weight: 800; padding: 2px 6px; border-radius: 10px;">
+                  ${m.matchScore}% Match
+                </span>
+              </div>
+              <p style="margin: 0 0 8px; color: var(--color-text-muted); font-size: 0.82rem;">${m.companyName} &middot; ${m.location}</p>
+              <div style="font-size: 0.85rem; font-weight: 700; color: var(--brand-600); margin-bottom: 8px;">${m.salary}</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px;">
+                ${(m.skills || []).map(s => `<span class="tag" style="font-size: 0.72rem; padding: 2px 8px;">${s}</span>`).join('')}
+              </div>
+            </div>
+            <a href="/jobs/${m.id}" class="btn btn-primary btn-sm" style="text-align: center; width: 100%; box-sizing: border-box; text-decoration: none;">
+              View & Apply Now →
+            </a>
+          </div>
+        `).join("");
+      }
+
+      await appendBotMessage(`
+        <strong>🎉 Congratulations, ${candidateName}!</strong><br/>
+        Your candidate profile is active and you are now signed in.<br/><br/>
+        Here are top jobs curated based on your preferences:
+        <div style="display: flex; gap: 12px; overflow-x: auto; padding: 8px 0 12px; margin-top: 8px;">
+          ${cardsHtml || '<p style="color:var(--color-text-muted);">Explore all openings on our job board!</p>'}
+        </div>
+        <div style="margin-top: 14px; display: flex; gap: 10px;">
+          <a href="/jobs" class="btn btn-secondary btn-sm" style="text-decoration:none;">Browse All Jobs</a>
+          <a href="/applicant" class="btn btn-primary btn-sm" style="text-decoration:none;">Go to Candidate Portal</a>
+        </div>
+      `, 600);
+    }
+
+    // Start Chatbot Flow
+    initStep1();
+  })();
+</script>
