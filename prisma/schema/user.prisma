@@ -10,6 +10,20 @@ model User {
   verifyExpires DateTime?
   resetToken    String?
   resetTokenExpires DateTime?
+  
+  // Naukri Candidate Profile Fields
+  headline            String?
+  bio                 String?
+  skills              String?
+  experienceYears     Float?
+  location            String?
+  education           String?
+  currentCompany      String?
+  expectedSalary      String?
+  phone               String?
+  resumeUrl           String?
+  profileCompletedPct Int?      @default(0)
+
   createdAt     DateTime? @default(now())
   updatedAt     DateTime? @updatedAt
 

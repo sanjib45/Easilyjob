@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/shell.css" />
   <link rel="stylesheet" href="/css/confirm-modal.css" />
+  <link rel="stylesheet" href="/css/toast.css" />
   <script src="/js/theme-init.js"></script>
 </head>
 <body class="app-shell-body">
@@ -41,9 +42,15 @@
       <span class="icon-sun"><%- icon('sun') %></span>
       <span class="icon-moon"><%- icon('moon') %></span>
     </button>
-    <!-- Logout -->
+    <!-- Logout with custom modal -->
     <% if (user) { %>
-    <form action="/logout" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to log out?')">
+    <form action="/logout" method="POST" style="margin:0;"
+      data-confirm="Are you sure you want to log out of your session?"
+      data-confirm-title="Log Out Confirmation"
+      data-confirm-message="You are about to securely log out of Easily Jobs. Would you like to proceed?"
+      data-confirm-action="Log Out"
+      data-confirm-variant="danger"
+      data-confirm-icon="log-out">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <button type="submit" class="topbar-btn topbar-logout-btn" title="Log out">
         <%- icon('log-out') %>
@@ -57,6 +64,7 @@
 
   <script src="/js/theme-toggle.js"></script>
   <script src="/js/confirm-modal.js"></script>
+  <script src="/js/toast.js"></script>
   <script>
     (function () {
       var sidebar = document.getElementById("appSidebar");

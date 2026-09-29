@@ -1,56 +1,114 @@
-<section class="hero">
-  <div class="hero-brand">
-    <span class="brand-mark" style="width:44px;height:44px;font-size:1.1rem;border-radius:12px;">EJ</span>
-    <span class="hero-brand-name">Easily<span>Jobs</span></span>
-  </div>
-  <span class="hero-badge">
-    <%- icon('sparkles') %> Now live &mdash; <%= stats.jobs %> open roles
-  </span>
-  <h1>Find your next role, <span class="accent">or your next hire.</span></h1>
-  <p>Easily Jobs connects applicants with recruiters through a simple, no-nonsense job board &mdash; post a listing in minutes, or apply in one click.</p>
-  <div class="hero-actions">
-    <a href="/jobs" class="btn btn-primary btn-lg">
-      <%- icon('search') %> Browse jobs
-    </a>
-    <% if (!user) { %>
-      <a href="/register" class="btn btn-secondary btn-lg">Create an account</a>
-    <% } else if (user.role === "recruiter") { %>
-      <a href="/jobs/new" class="btn btn-secondary btn-lg">
-        <%- icon('plus') %> Post a job
+<section class="hero-split-banner">
+  <div class="hero-split-left">
+    <span class="hero-badge" style="background: rgba(255, 255, 255, 0.15); color: #ffffff; border-color: rgba(255, 255, 255, 0.25); margin-bottom: 16px;">
+      <%- icon('sparkles') %> Now Live &mdash; <%= stats.jobs %> Open Opportunities
+    </span>
+    <h1>Welcome to Easily Jobs</h1>
+    <p>Everything seems easier than before. Discover your next career move, track real-time applications, or hire high-impact engineering talent in minutes.</p>
+    
+    <div class="hero-actions" style="justify-content: flex-start; margin-bottom: 28px;">
+      <a href="/jobs" class="btn btn-primary btn-lg" style="background: #ffffff; color: #0f172a; box-shadow: 0 4px 16px rgba(0,0,0,0.25); border: none; font-weight: 700;">
+        <%- icon('search') %> Explore Jobs
       </a>
-    <% } %>
+      <% if (!user) { %>
+        <a href="/quick-apply" class="btn btn-secondary btn-lg" style="background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(10px);">
+          <%- icon('zap') %> Quick Apply
+        </a>
+      <% } else if (String(user.role || "").toUpperCase() === "RECRUITER") { %>
+        <a href="/jobs/new" class="btn btn-secondary btn-lg" style="background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(10px);">
+          <%- icon('plus') %> Post a Job
+        </a>
+      <% } else { %>
+        <a href="/applicant" class="btn btn-secondary btn-lg" style="background: rgba(255, 255, 255, 0.18); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(10px);">
+          <%- icon('briefcase') %> My Dashboard
+        </a>
+      <% } %>
+    </div>
+
+    <div style="display: flex; gap: 28px; flex-wrap: wrap;">
+      <div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #ffffff; line-height: 1;"><%= stats.jobs %></div>
+        <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.75);">Open Roles</div>
+      </div>
+      <div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #ffffff; line-height: 1;"><%= stats.companies %></div>
+        <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.75);">Companies Hiring</div>
+      </div>
+      <div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: #ffffff; line-height: 1;"><%= stats.applicants %></div>
+        <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.75);">Applications Sent</div>
+      </div>
+    </div>
   </div>
 
-  <div class="hero-stats">
-    <div class="hero-stat">
-      <div class="num"><%= stats.jobs %></div>
-      <div class="label">Open roles</div>
+  <!-- Modern Hero Bento Visual Showcase -->
+  <div class="hero-visual-bento">
+    <!-- Main Feature Tile: Engineering Collaboration -->
+    <div class="bento-tile bento-main">
+      <img src="/images/hero/team-collaboration.jpg" alt="Engineering Team Collaboration" class="bento-img" loading="eager" />
+      <div class="bento-glass-overlay"></div>
+      
+      <!-- Live Floating Activity Pill -->
+      <div class="bento-floating-pill">
+        <span class="live-dot-pulse"></span>
+        <span>Active Recruiting &bull; Live Match</span>
+      </div>
+
+      <!-- Live Job Match Glassmorphic Spotlight -->
+      <div class="bento-floating-card">
+        <div class="bento-card-top">
+          <div class="bento-company-tag">
+            <span class="company-badge-icon"><%- icon('briefcase') %></span>
+            <span>Featured Tech Role</span>
+          </div>
+          <span class="match-score-badge"><%- icon('zap') %> 98% Match</span>
+        </div>
+        <div class="bento-card-role">Staff Full-Stack Engineer</div>
+        <div class="bento-card-meta">
+          <span class="meta-item"><%- icon('map-pin') %> Remote</span>
+          <span class="meta-sep">&bull;</span>
+          <span class="meta-salary">$140k&ndash;$175k/yr</span>
+        </div>
+      </div>
     </div>
-    <div class="hero-stat">
-      <div class="num"><%= stats.companies %></div>
-      <div class="label">Companies hiring</div>
-    </div>
-    <div class="hero-stat">
-      <div class="num"><%= stats.applicants %></div>
-      <div class="label">Applications sent</div>
+
+    <!-- Secondary Side Tiles -->
+    <div class="bento-column-side">
+      <!-- Top Tile: Modern Workspace -->
+      <div class="bento-tile">
+        <img src="/images/hero/engineer-workspace.jpg" alt="Modern Developer Workspace" class="bento-img" loading="eager" />
+        <div class="bento-glass-overlay"></div>
+        <div class="bento-tag">
+          <%- icon('zap') %> <span>1-Click Apply</span>
+        </div>
+      </div>
+
+      <!-- Bottom Tile: Interview & Career Growth -->
+      <div class="bento-tile">
+        <img src="/images/hero/interview-meeting.jpg" alt="Career Interview Discussion" class="bento-img" loading="eager" />
+        <div class="bento-glass-overlay"></div>
+        <div class="bento-tag">
+          <%- icon('check-circle') %> <span>Direct Hire</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<div class="grid" style="margin-top: 40px;">
+<div class="grid" style="margin-top: 24px;">
   <div class="card" style="cursor: default;">
-    <span class="avatar" style="background: var(--brand-600);"><%- icon('zap', 'icon-lg') %></span>
-    <h3>Apply in minutes</h3>
-    <p style="margin:0;">No lengthy profiles &mdash; just your details and a resume upload.</p>
+    <span class="avatar" style="background: linear-gradient(135deg, #0284c7, #0d9488);"><%- icon('zap', 'icon-lg') %></span>
+    <h3>1-Click Quick Apply</h3>
+    <p style="margin:0;">No lengthy profiles &mdash; conversational chatbot application matching your top skills in seconds.</p>
   </div>
   <div class="card" style="cursor: default;">
-    <span class="avatar" style="background: var(--accent-500);"><%- icon('shield-check', 'icon-lg') %></span>
-    <h3>Built to be secure</h3>
-    <p style="margin:0;">Hashed credentials, CSRF-protected forms, and rate-limited login.</p>
+    <span class="avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><%- icon('shield-check', 'icon-lg') %></span>
+    <h3>Real-Time Pipeline Tracker</h3>
+    <p style="margin:0;">Live 5-stage status stepper, interview schedule sync, and direct candidate-recruiter messaging.</p>
   </div>
   <div class="card" style="cursor: default;">
-    <span class="avatar" style="background: var(--success-500);"><%- icon('layers', 'icon-lg') %></span>
-    <h3>Simple recruiter tools</h3>
-    <p style="margin:0;">Post, edit, and track applicants for every job you list.</p>
+    <span class="avatar" style="background: linear-gradient(135deg, #10b981, #059669);"><%- icon('layers', 'icon-lg') %></span>
+    <h3>Recruiter ATS Kanban</h3>
+    <p style="margin:0;">Drag-and-drop applicant pipelines with inline instant resume PDF previewer.</p>
   </div>
 </div>

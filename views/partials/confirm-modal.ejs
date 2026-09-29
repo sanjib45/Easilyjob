@@ -1,17 +1,30 @@
 <div class="confirm-modal-backdrop" id="confirmModalBackdrop" style="display: none;" aria-hidden="true">
   <div class="confirm-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle" aria-describedby="confirmModalMessage" tabindex="-1">
+    <button type="button" class="confirm-modal-close-btn" id="confirmModalCloseBtn" aria-label="Close dialog">
+      <%- icon('x') %>
+    </button>
+    
     <div class="confirm-modal-header">
-      <div class="confirm-modal-icon-badge" id="confirmModalIcon">
-        <%- icon('alert-triangle') %>
+      <div class="confirm-modal-icon-badge variant-danger" id="confirmModalIcon">
+        <span class="confirm-icon-slot" data-icon="alert-triangle"><%- icon('alert-triangle') %></span>
+        <span class="confirm-icon-slot" data-icon="log-out" style="display:none;"><%- icon('log-out') %></span>
+        <span class="confirm-icon-slot" data-icon="trash" style="display:none;"><%- icon('trash') %></span>
+        <span class="confirm-icon-slot" data-icon="check-circle" style="display:none;"><%- icon('check-circle') %></span>
+        <span class="confirm-icon-slot" data-icon="sparkles" style="display:none;"><%- icon('sparkles') %></span>
+        <span class="confirm-icon-slot" data-icon="alert-circle" style="display:none;"><%- icon('alert-circle') %></span>
       </div>
-      <div>
+      
+      <div class="confirm-modal-text-wrap">
         <h3 class="confirm-modal-title" id="confirmModalTitle">Confirm Action</h3>
         <p class="confirm-modal-subtitle" id="confirmModalMessage">Are you sure you want to proceed?</p>
       </div>
     </div>
+    
     <div class="confirm-modal-actions">
-      <button type="button" class="btn btn-secondary" id="confirmModalCancelBtn">Cancel</button>
-      <button type="button" class="btn btn-danger" id="confirmModalConfirmBtn">Proceed</button>
+      <button type="button" class="btn btn-secondary confirm-modal-cancel" id="confirmModalCancelBtn">Cancel</button>
+      <button type="button" class="btn btn-danger confirm-modal-confirm" id="confirmModalConfirmBtn">
+        <span id="confirmModalBtnText">Proceed</span>
+      </button>
     </div>
   </div>
 </div>

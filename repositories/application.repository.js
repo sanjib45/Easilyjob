@@ -8,6 +8,23 @@ import { prisma } from "../config/prisma.js";
 
 const defaultInclude = {
   job: true,
+  applicant: {
+    select: {
+      id: true,
+      name: true,
+      headline: true,
+      bio: true,
+      skills: true,
+      experienceYears: true,
+      location: true,
+      education: true,
+      currentCompany: true,
+      expectedSalary: true,
+      phone: true,
+      resumeUrl: true,
+      profileCompletedPct: true,
+    },
+  },
   statusHistory: { orderBy: { createdAt: "desc" } },
   interviews: {
     include: { evaluation: true, result: true },
@@ -55,7 +72,21 @@ export const listOwnedApplications = async (
   const [applications, total] = await Promise.all([
     prisma.application.findMany({
       where,
-      include: { job: true },
+      include: {
+        job: true,
+        applicant: {
+          select: {
+            id: true,
+            name: true,
+            headline: true,
+            skills: true,
+            experienceYears: true,
+            location: true,
+            education: true,
+            profileCompletedPct: true,
+          },
+        },
+      },
       orderBy: orderBy || [{ createdAt: "desc" }, { id: "desc" }],
       skip,
       take,

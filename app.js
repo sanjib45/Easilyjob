@@ -52,6 +52,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // Health routes are mounted before body parsing/auth so probes stay lightweight.
 app.use("/health", healthRoutes);
 
+app.use(express.json({ limit: env.requestBodyLimit }));
 app.use(express.urlencoded({ extended: true, limit: env.requestBodyLimit }));
 app.use(cookieParser());
 app.use(flashMiddleware);

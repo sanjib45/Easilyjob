@@ -7,11 +7,30 @@ import { listUserSavedJobs } from "../repositories/savedJob.repository.js";
  */
 
 export const getApplicantDashboardData = async (applicantId) => {
-  const [applications, savedJobs, upcomingInterviews] = await Promise.all([
+  const [candidateUser, applications, savedJobs, upcomingInterviews] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: applicantId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        headline: true,
+        bio: true,
+        skills: true,
+        experienceYears: true,
+        location: true,
+        education: true,
+        currentCompany: true,
+        expectedSalary: true,
+        phone: true,
+        resumeUrl: true,
+        profileCompletedPct: true,
+      },
+    }),
     prisma.application.findMany({
       where: { applicantId },
       include: {
-        job: { select: { id: true, designation: true, companyName: true, location: true, salary: true } },
+        job: { select: { id: true, designation: true, companyName: true, location: true, salary: true, category: true, skills: true } },
         conversation: { select: { id: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -38,6 +57,7 @@ export const getApplicantDashboardData = async (applicantId) => {
   };
 
   return {
+    candidateUser,
     applications,
     savedJobs,
     upcomingInterviews,
@@ -57,6 +77,7 @@ export const getApplicantApplicationDetails = async (applicationId, applicantId)
       name: true,
       email: true,
       contact: true,
+      resumePath: true,
       status: true,
       createdAt: true,
       statusUpdatedAt: true,
@@ -67,6 +88,10 @@ export const getApplicantApplicationDetails = async (applicationId, applicantId)
           companyName: true,
           location: true,
           salary: true,
+          category: true,
+          skills: true,
+          openings: true,
+          applyBy: true,
         },
       },
       statusHistory: {
@@ -82,11 +107,12 @@ export const getApplicantApplicationDetails = async (applicationId, applicantId)
       interviews: {
         select: {
           id: true,
-          roundName: true,
           scheduledAt: true,
           durationMinutes: true,
           timezone: true,
           meetingUrl: true,
+          location: true,
+          candidateMessage: true,
           status: true,
           result: {
             select: {

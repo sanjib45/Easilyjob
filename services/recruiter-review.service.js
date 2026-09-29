@@ -9,6 +9,7 @@ import {
 } from "../repositories/application.repository.js";
 import { upsertOutbox } from "../repositories/email.repository.js";
 import { assertApplicationTransition } from "../policies/applicationTransitions.js";
+import { calculateSkillMatch } from "./skillMatch.service.js";
 
 export const REVIEW_STATUSES = new Set([
   "NEW",
@@ -30,6 +31,17 @@ const shortlistPayload = ({ application, job }) => ({
 export const getRecruiterApplication = async (applicationId, recruiterId) => {
   const application = await findOwnedApplication(recruiterId, applicationId);
   if (!application) throw new AppError("Application not found.", 404);
+
+  const candidateSkills = application.applicant?.skills || "";
+  const jobSkills = application.job?.skills || "";
+  application.skillMatch = calculateSkillMatch({
+    candidateSkills,
+    jobSkills,
+    candidateExp: application.applicant?.experienceYears,
+    candidateLocation: application.applicant?.location,
+    jobLocation: application.job?.location,
+  });
+
   return application;
 };
 
@@ -64,8 +76,21 @@ export const listRecruiterApplications = async ({
     take: safeLimit,
   });
 
+  const enrichedApps = applications.map((app) => {
+    const candidateSkills = app.applicant?.skills || "";
+    const jobSkills = app.job?.skills || "";
+    app.skillMatch = calculateSkillMatch({
+      candidateSkills,
+      jobSkills,
+      candidateExp: app.applicant?.experienceYears,
+      candidateLocation: app.applicant?.location,
+      jobLocation: app.job?.location,
+    });
+    return app;
+  });
+
   return {
-    applications,
+    applications: enrichedApps,
     pagination: {
       page: safePage,
       limit: safeLimit,

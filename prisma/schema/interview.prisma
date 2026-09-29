@@ -9,6 +9,7 @@ model Interview {
   meetingUrl         String?
   location           String?
   candidateMessage   String?
+  roundName          String?  @default("Interview Round")
   status             String   @default("SCHEDULED")
   cancellationReason String?
   createdAt          DateTime? @default(now())
