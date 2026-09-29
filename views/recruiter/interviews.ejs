@@ -1,35 +1,92 @@
-<div class="page-header">
+<div class="page-header" style="margin-bottom: 24px;">
   <div>
     <span class="eyebrow">Recruiter workspace</span>
-    <h1>Interviews</h1>
-    <p class="subtitle">Manage scheduled interviews for your applicants.</p>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Interviews</h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">
+      Track and manage all scheduled rounds, evaluation scores, and shared candidate results.
+    </p>
   </div>
 </div>
 
 <% if (interviews.length === 0) { %>
-  <div class="empty-state">
+  <div class="empty-state" style="padding: 48px 24px;">
     <%- icon('calendar', 'icon-xl') %>
-    <h3>No interviews scheduled</h3>
-    <p>Schedule an interview from an applicant review page.</p>
+    <h3>No interviews scheduled yet</h3>
+    <p>You can schedule interview rounds directly from any candidate's review page.</p>
+    <a href="/recruiter/applicants" class="btn btn-primary btn-sm" style="margin-top: 12px;">Browse applicants</a>
   </div>
 <% } else { %>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Applicant</th><th>Job</th><th>Scheduled</th><th>Status</th><th>Evaluation</th><th>Update</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Candidate</th>
+          <th>Job Opening</th>
+          <th>Scheduled Time</th>
+          <th>Round Status</th>
+          <th>Score</th>
+          <th>Shared Result</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
       <tbody>
         <% interviews.forEach(function (interview) { %>
           <tr>
-            <td><a href="/recruiter/applicants/<%= interview.applicationId %>"><%= interview.application.name %></a><div class="sub"><%= interview.application.email %></div></td>
-            <td><%= interview.job.designation %></td>
-            <td><%= formatDate(interview.scheduledAt) %> <div class="sub"><%= interview.timezone %></div></td>
-            <td><span class="status-badge"><%= interview.status.replaceAll("_", " ") %></span></td>
-            <td><%= interview.evaluation ? `${interview.evaluation.overallScore}/100` : "Pending" %></td>
             <td>
-              <form action="/recruiter/interviews/<%= interview.id %>" method="POST">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                <input type="hidden" name="status" value="<%= interview.status === "SCHEDULED" ? "COMPLETED" : interview.status %>" />
-                <button type="submit" class="btn btn-secondary btn-sm"><%= interview.status === "SCHEDULED" ? "Complete" : "Update" %></button>
-              </form>
+              <div class="cell-user">
+                <span class="avatar-sm" style="background: <%= colorForName(interview.application.name) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">
+                  <%= initialsFor(interview.application.name) %>
+                </span>
+                <div>
+                  <div class="name">
+                    <a href="/recruiter/applicants/<%= interview.applicationId %>" style="font-weight: 600;">
+                      <%= interview.application.name %>
+                    </a>
+                  </div>
+                  <div class="sub"><%= interview.application.email %></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight: 500;"><%= interview.job.designation %></div>
+              <div class="sub"><%= interview.job.companyName %></div>
+            </td>
+            <td>
+              <div style="font-weight: 500;"><%= formatDate(interview.scheduledAt) %></div>
+              <div class="sub"><%= interview.timezone %> · <%= interview.durationMinutes %>m</div>
+            </td>
+            <td>
+              <span class="status-badge">
+                <%= interview.status.replaceAll("_", " ") %>
+              </span>
+            </td>
+            <td>
+              <% if (interview.evaluation) { %>
+                <span style="font-weight: 700; color: var(--brand-700);">
+                  <%= interview.evaluation.overallScore %>/100
+                </span>
+                <div class="sub"><%= (interview.evaluation.recommendation || "").replaceAll("_", " ") %></div>
+              <% } else { %>
+                <span style="color: var(--color-text-subtle); font-size: 0.85rem;">Pending</span>
+              <% } %>
+            </td>
+            <td>
+              <% if (interview.result) { %>
+                <span class="status-badge" style="background: var(--brand-50); color: var(--brand-700); font-weight: 600;">
+                  <%- icon('check-circle') %> <%= interview.result.outcome %>
+                </span>
+              <% } else if (interview.status === "COMPLETED") { %>
+                <a href="/recruiter/interviews/<%= interview.id %>/share-result" class="btn btn-primary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">
+                  Share result
+                </a>
+              <% } else { %>
+                <span style="color: var(--color-text-subtle); font-size: 0.85rem;">Not shared</span>
+              <% } %>
+            </td>
+            <td style="text-align: right;">
+              <a href="/recruiter/applicants/<%= interview.applicationId %>" class="btn btn-secondary btn-sm" style="padding: 4px 12px; font-weight: 600;">
+                Review
+              </a>
             </td>
           </tr>
         <% }) %>

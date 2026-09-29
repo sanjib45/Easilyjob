@@ -1,0 +1,12 @@
+<div class="empty-state" style="padding: 48px 24px; text-align: center; background: var(--color-bg-surface); border: 1px dashed var(--color-border); border-radius: 16px;">
+  <div class="empty-icon" style="font-size: 2.5rem; color: var(--color-text-subtle); margin-bottom: 12px;">
+    <%- icon(emptyIcon || 'inbox') %>
+  </div>
+  <h3 style="margin: 0 0 6px; font-weight: 700; font-size: 1.15rem;"><%= emptyTitle %></h3>
+  <p style="margin: 0; color: var(--color-text-muted); font-size: 0.9rem;"><%= emptySubtitle %></p>
+  <% if (typeof emptyAction !== 'undefined' && emptyAction) { %>
+    <div style="margin-top: 16px;">
+      <%- emptyAction %>
+    </div>
+  <% } %>
+</div>

@@ -64,3 +64,17 @@ export const formatDate = (dateInput) =>
     month: "short",
     day: "numeric",
   });
+
+export const formatSalary = (job) => {
+  if (!job) return "Negotiable";
+  if (job.salaryMin && job.salaryMax) {
+    return `₹${job.salaryMin} - ${job.salaryMax} ${job.salaryPeriod || "LPA"}`;
+  }
+  if (job.salaryMin) {
+    return `₹${job.salaryMin}+ ${job.salaryPeriod || "LPA"}`;
+  }
+  if (job.salary) {
+    return job.salary.includes("LPA") || job.salary.includes("₹") ? job.salary : `${job.salary} LPA`;
+  }
+  return "Negotiable";
+};

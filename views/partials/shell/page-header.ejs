@@ -1,0 +1,16 @@
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <% if (typeof eyebrow !== 'undefined' && eyebrow) { %>
+      <span class="eyebrow"><%= eyebrow %></span>
+    <% } %>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;"><%= title %></h1>
+    <% if (typeof subtitle !== 'undefined' && subtitle) { %>
+      <p class="subtitle" style="margin: 0; color: var(--color-text-muted);"><%= subtitle %></p>
+    <% } %>
+  </div>
+  <% if (typeof actions !== 'undefined' && actions) { %>
+    <div class="page-header-actions">
+      <%- actions %>
+    </div>
+  <% } %>
+</div>

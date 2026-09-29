@@ -1,0 +1,55 @@
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <span class="eyebrow">Candidate Portal</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">My Applications</h1>
+    <p class="subtitle" style="margin: 0; color: var(--app-text-muted);">Track your job application statuses, interviews, and direct messages.</p>
+  </div>
+</div>
+
+<% if (!applications || applications.length === 0) { %>
+  <div class="empty-state">
+    <%- icon('briefcase', 'icon-xl') %>
+    <h3>No applications submitted yet</h3>
+    <p>Browse open job roles and submit your resume to start receiving recruiter updates.</p>
+    <a href="/jobs" class="btn btn-primary btn-sm" style="margin-top: 12px;">Browse open jobs</a>
+  </div>
+<% } else { %>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Job Role</th>
+          <th>Company</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Applied Date</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% applications.forEach(function (app) { %>
+          <tr>
+            <td style="font-weight: 600;">
+              <a href="/jobs/<%= app.job.id %>"><%= app.job.designation %></a>
+            </td>
+            <td><%= app.job.companyName %></td>
+            <td><%= app.job.location %></td>
+            <td>
+              <span class="status-badge">
+                <%= app.status.replaceAll("_", " ") %>
+              </span>
+            </td>
+            <td><%= formatDate(app.createdAt) %></td>
+            <td style="text-align: right;">
+              <% if (app.conversation) { %>
+                <a href="/messages/<%= app.conversation.id %>" class="btn btn-secondary btn-sm">
+                  <%- icon('message-square') %> Chat
+                </a>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>

@@ -1,0 +1,66 @@
+<div style="margin-bottom: 16px;">
+  <a href="/recruiter/applicants/<%= interview.applicationId %>" class="hint" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:500;color: var(--color-text-muted);">
+    <%- icon('arrow-left') %> Back to applicant review
+  </a>
+</div>
+
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <span class="eyebrow">Interview decision</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Share Interview Result</h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">
+      Candidate: <strong><%= interview.application.name %></strong> (<%= interview.application.email %>) for <strong><%= interview.job.designation %></strong>
+    </p>
+  </div>
+</div>
+
+<div style="max-width: 680px;">
+  <div style="background: var(--brand-50); border: 1px solid var(--brand-200); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 24px;">
+    <div style="display: flex; gap: 10px; align-items: flex-start;">
+      <span style="color: var(--brand-600); margin-top: 2px;"><%- icon('shield') %></span>
+      <div>
+        <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--brand-900); margin: 0 0 4px;">Candidate-Safe Sharing</h3>
+        <p style="font-size: 0.85rem; color: var(--brand-700); margin: 0;">
+          Only the <strong>outcome</strong> and your written <strong>summary</strong> will be saved and emailed to the candidate. Your internal evaluation scores, ratings, and private notes are strictly confidential and will <strong>never</strong> be shared.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <section class="panel">
+    <form action="/recruiter/interviews/<%= interview.id %>/share-result" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+      <div style="margin-bottom: 20px;">
+        <label for="outcome" style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 6px;">
+          Final Outcome / Decision <span style="color: var(--danger-600);">*</span>
+        </label>
+        <select id="outcome" name="outcome" required style="width: 100%;">
+          <option value="">Select decision...</option>
+          <option value="HIRED">HIRED — Extend Job Offer</option>
+          <option value="ON_HOLD">ON_HOLD — Position on Hold / Under Consideration</option>
+          <option value="REJECTED">REJECTED — Not Moving Forward</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <label for="summary" style="font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 6px;">
+          Candidate Feedback Summary <span style="color: var(--danger-600);">*</span>
+        </label>
+        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin: 0 0 8px;">
+          Provide constructive feedback or next steps. This message will be sent in the email notification to <%= interview.application.name %>.
+        </p>
+        <textarea id="summary" name="summary" rows="6" maxlength="3000" required placeholder="Dear <%= interview.application.name %>, thank you for interviewing with our team..." style="width: 100%;"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+          <%- icon('send') %> Confirm & Send Result
+        </button>
+        <a href="/recruiter/applicants/<%= interview.applicationId %>" class="btn btn-secondary">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </section>
+</div>

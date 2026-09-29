@@ -1,0 +1,37 @@
+<div class="page-header">
+  <div>
+    <span class="eyebrow">Real-Time Messaging</span>
+    <h1>Direct Messages</h1>
+    <p class="subtitle">Chat directly with applicants and recruiters about active job postings.</p>
+  </div>
+</div>
+
+<% if (!conversations || conversations.length === 0) { %>
+  <div class="empty-state">
+    <%- icon('message-square', 'icon-xl') %>
+    <h3>No active conversations</h3>
+    <p>Conversations will automatically start when an applicant applies or contact is initiated.</p>
+  </div>
+<% } else { %>
+  <div class="chat-conversations-list">
+    <% conversations.forEach(function (conv) { %>
+      <% var other = conv.recruiterId === user.id ? conv.applicant : conv.recruiter; %>
+      <a href="/messages/<%= conv.id %>" class="chat-conv-card">
+        <span class="avatar-sm" style="background: <%= colorForName(other.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; font-size:1.1rem; border-radius:12px;">
+          <%= initialsFor(other.name) %>
+        </span>
+        <div class="conv-info">
+          <div class="conv-header">
+            <span class="conv-name"><%= other.name %></span>
+            <span class="conv-time"><%= timeAgo(conv.lastMessageAt) %></span>
+          </div>
+          <div class="conv-meta">
+            <span class="conv-role"><%= conv.application?.job?.designation || 'Job Posting' %></span>
+            &middot; <%= conv.application?.job?.companyName || '' %>
+          </div>
+          <p class="conv-preview"><%= conv.lastMessage || 'No messages yet.' %></p>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+<% } %>

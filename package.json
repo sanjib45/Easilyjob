@@ -7,7 +7,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node app.js",
+    "start": "nodemon app.js",
     "dev": "nodemon app.js",
     "db:migrate": "node scripts/setup-mongodb.mjs",
     "db:import:mongodb": "node scripts/migrate-sqlite-to-mongodb.mjs",
@@ -30,8 +30,8 @@
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "compression": "^1.8.1",
-    "cross-env": "^7.0.3",
     "cookie-parser": "^1.4.7",
+    "cross-env": "^7.0.3",
     "dotenv": "^17.4.2",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
@@ -44,6 +44,7 @@
     "morgan": "^1.11.0",
     "multer": "^1.4.5-lts.2",
     "nodemailer": "^9.0.3",
+    "socket.io": "^4.8.3",
     "sql.js": "^1.14.2"
   },
   "devDependencies": {

@@ -36,9 +36,27 @@
 
     <div class="form-group">
       <label for="password"><%- icon('lock') %> Password</label>
-      <input type="password" id="password" name="password" minlength="8" required />
+      <div class="password-wrapper" style="position: relative;">
+        <input type="password" id="password" name="password" minlength="8" required style="padding-right: 2.5rem; width: 100%; box-sizing: border-box;" />
+        <button type="button" class="password-toggle" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0; display: flex; align-items: center; justify-content: center;" onclick="togglePassword('password', this)">
+          <%- icon('eye') %>
+        </button>
+      </div>
       <p class="hint">At least 8 characters.</p>
     </div>
+
+    <script>
+      function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.innerHTML = '<%- icon("eye-off") %>';
+        } else {
+          input.type = 'password';
+          btn.innerHTML = '<%- icon("eye") %>';
+        }
+      }
+    </script>
 
     <button type="submit" class="btn btn-primary btn-block btn-lg">Create account</button>
   </form>

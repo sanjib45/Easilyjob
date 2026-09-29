@@ -1,0 +1,77 @@
+<div class="sidebar-inner">
+  <div class="sidebar-brand">
+    <a href="/applicant" class="sidebar-logo">
+      <span class="logo-mark"><%- icon('briefcase') %></span>
+      <div class="logo-text">
+        <span class="logo-title">Easily Jobs</span>
+        <span class="logo-badge">Candidate Portal</span>
+      </div>
+    </a>
+    <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">
+      <%- icon('x') %>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Applicant navigation">
+    <div class="nav-section-title">Menu</div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/applicant" class="nav-link <%= currentPath === '/applicant' ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('briefcase') %></span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/jobs" class="nav-link <%= currentPath === '/jobs' ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('search') %></span>
+          <span class="nav-label">Browse Jobs</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/applicant/applications" class="nav-link <%= currentPath.startsWith('/applicant/applications') ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('users') %></span>
+          <span class="nav-label">My Applications</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/applicant/saved" class="nav-link <%= currentPath.startsWith('/applicant/saved') ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('bookmark') %></span>
+          <span class="nav-label">Saved Jobs</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/messages" class="nav-link <%= currentPath.startsWith('/messages') ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('message-square') %></span>
+          <span class="nav-label">Direct Messages</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-section-title">Account</div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/applicant/profile" class="nav-link <%= currentPath === '/applicant/profile' ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('user') %></span>
+          <span class="nav-label">Profile & Resume</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <% if (user) { %>
+      <div class="sidebar-profile">
+        <span class="avatar-sm" style="background: <%= colorForName(user.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center;">
+          <%= initialsFor(user.name) %>
+        </span>
+        <div class="profile-meta">
+          <div class="profile-name"><%= user.name %></div>
+          <div class="profile-email"><%= user.email %></div>
+        </div>
+        <% if (user.emailVerified) { %>
+          <span class="verified-dot" title="Verified Candidate"><%- icon('check-circle') %></span>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</div>

@@ -3,7 +3,7 @@
   <h1>Post a job</h1>
   <p class="subtitle">Fill in the details below &mdash; it'll be live on the job board immediately.</p>
 
-  <form action="/jobs/new" method="POST" novalidate>
+  <form action="/jobs/new" method="POST" novalidate data-confirm data-confirm-title="Post Job Listing" data-confirm-message="Are you sure you want to publish this new job listing to the job board?" data-confirm-action="Post Job" data-confirm-variant="primary">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
 
     <div class="form-row">

@@ -1,0 +1,71 @@
+<div class="sidebar-inner">
+  <div class="sidebar-brand">
+    <a href="/recruiter" class="sidebar-logo">
+      <span class="logo-mark"><%- icon('briefcase') %></span>
+      <div class="logo-text">
+        <span class="logo-title">Easily Jobs</span>
+        <span class="logo-badge">Recruiter Portal</span>
+      </div>
+    </a>
+    <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">
+      <%- icon('x') %>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Recruiter navigation">
+    <div class="nav-section-title">Menu</div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/recruiter" class="nav-link <%= currentPath === '/recruiter' ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('briefcase') %></span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/jobs/new" class="nav-link <%= currentPath === '/jobs/new' ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('plus') %></span>
+          <span class="nav-label">Post a Job</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/recruiter/applicants" class="nav-link <%= currentPath.startsWith('/recruiter/applicants') || currentPath.includes('/applicants') ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('users') %></span>
+          <span class="nav-label">Applicants</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/recruiter/interviews" class="nav-link <%= currentPath.startsWith('/recruiter/interviews') ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('calendar') %></span>
+          <span class="nav-label">Interviews</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-section-title">Public</div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <a href="/jobs" class="nav-link <%= currentPath === '/jobs' ? 'active' : '' %>">
+          <span class="nav-icon"><%- icon('eye') %></span>
+          <span class="nav-label">Job Board</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <% if (user) { %>
+      <div class="sidebar-profile">
+        <span class="avatar-sm" style="background: <%= colorForName(user.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center;">
+          <%= initialsFor(user.name) %>
+        </span>
+        <div class="profile-meta">
+          <div class="profile-name"><%= user.name %></div>
+          <div class="profile-email"><%= user.email %></div>
+        </div>
+        <% if (user.emailVerified) { %>
+          <span class="verified-dot" title="Verified Recruiter"><%- icon('check-circle') %></span>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</div>

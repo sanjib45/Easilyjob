@@ -14,9 +14,30 @@
     </div>
 
     <div class="form-group">
-      <label for="password"><%- icon('lock') %> Password</label>
-      <input type="password" id="password" name="password" required />
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <label for="password" style="margin-bottom: 0;"><%- icon('lock') %> Password</label>
+        <a href="/forgot-password" style="font-size: 0.875rem; color: var(--brand-500); text-decoration: none;">Forgot password?</a>
+      </div>
+      <div class="password-wrapper" style="position: relative;">
+        <input type="password" id="password" name="password" required style="padding-right: 2.5rem; width: 100%; box-sizing: border-box;" />
+        <button type="button" class="password-toggle" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0; display: flex; align-items: center; justify-content: center;" onclick="togglePassword('password', this)">
+          <%- icon('eye') %>
+        </button>
+      </div>
     </div>
+
+    <script>
+      function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.innerHTML = '<%- icon("eye-off") %>';
+        } else {
+          input.type = 'password';
+          btn.innerHTML = '<%- icon("eye") %>';
+        }
+      }
+    </script>
 
     <button type="submit" class="btn btn-primary btn-block btn-lg">Log in</button>
   </form>

@@ -1,70 +1,138 @@
 <% const pageParams = (page) => new URLSearchParams({ q: filters.search || "", status: filters.status || "", jobId: filters.jobId || "", sort: filters.sort || "newest", limit: String(pagination.limit), page: String(page) }).toString(); %>
+<% const hasActiveFilters = Boolean(filters.search || filters.status || filters.jobId || (filters.sort && filters.sort !== "newest")); %>
 
-<div class="page-header">
+<div class="page-header" style="margin-bottom: 24px;">
   <div>
     <span class="eyebrow">Recruiter workspace</span>
-    <h1>Applicants</h1>
-    <p class="subtitle"><%= pagination.total %> application<%= pagination.total === 1 ? "" : "s" %> across your job postings.</p>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Applicants</h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">
+      <%= pagination.total %> candidate application<%= pagination.total === 1 ? "" : "s" %> across your listings.
+    </p>
   </div>
 </div>
 
-<section class="panel">
+<section class="panel" style="margin-bottom: 24px;">
   <form method="GET" action="/recruiter/applicants" class="filter-row">
-    <input type="search" name="q" value="<%= filters.search %>" placeholder="Search applicant, email, job, or company" />
-    <select name="jobId" aria-label="Filter by job">
-      <option value="">All jobs</option>
+    <input type="search" name="q" value="<%= filters.search %>" placeholder="Search by name, email, or designation..." style="flex: 1.5;" />
+    
+    <select name="jobId" aria-label="Filter by job" style="flex: 1;">
+      <option value="">All job postings</option>
       <% jobs.forEach(function (job) { %>
         <option value="<%= job.id %>" <%= filters.jobId === job.id ? "selected" : "" %>><%= job.designation %></option>
       <% }) %>
     </select>
-    <select name="status" aria-label="Filter by application status">
+
+    <select name="status" aria-label="Filter by application status" style="flex: 1;">
       <option value="">All statuses</option>
-      <% ["NEW", "REVIEWING", "SHORTLISTED", "INTERVIEW_SCHEDULED", "INTERVIEWED", "HIRED", "REJECTED"].forEach(function (status) { %>
-        <option value="<%= status %>" <%= filters.status === status ? "selected" : "" %>><%= status.replaceAll("_", " ") %></option>
+      <% [
+        ["NEW", "New"],
+        ["REVIEWING", "In Review"],
+        ["SHORTLISTED", "Shortlisted"],
+        ["INTERVIEW_SCHEDULED", "Interview Scheduled"],
+        ["INTERVIEWED", "Interviewed"],
+        ["HIRED", "Hired"],
+        ["REJECTED", "Rejected"]
+      ].forEach(function (pair) { %>
+        <option value="<%= pair[0] %>" <%= filters.status === pair[0] ? "selected" : "" %>><%= pair[1] %></option>
       <% }) %>
     </select>
-    <select name="sort" aria-label="Sort applications">
-      <% [["newest", "Newest"], ["oldest", "Oldest"], ["applicant", "Applicant name"], ["status", "Status"]].forEach(function (option) { %>
+
+    <select name="sort" aria-label="Sort applications" style="flex: 0.8;">
+      <% [
+        ["newest", "Newest first"],
+        ["oldest", "Oldest first"],
+        ["applicant", "Candidate name"],
+        ["status", "Status order"]
+      ].forEach(function (option) { %>
         <option value="<%= option[0] %>" <%= filters.sort === option[0] ? "selected" : "" %>><%= option[1] %></option>
       <% }) %>
     </select>
-    <button type="submit" class="btn btn-primary">Apply filters</button>
+
+    <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+      <%- icon('search') %> Filter
+    </button>
+
+    <% if (hasActiveFilters) { %>
+      <a href="/recruiter/applicants" class="btn btn-secondary" style="white-space: nowrap;">
+        Reset
+      </a>
+    <% } %>
   </form>
 </section>
 
 <% if (applications.length === 0) { %>
-  <div class="empty-state">
+  <div class="empty-state" style="padding: 48px 24px;">
     <%- icon('users', 'icon-xl') %>
-    <h3>No matching applications</h3>
-    <p>Try changing the filters or wait for new applications.</p>
+    <h3>No matching applications found</h3>
+    <p>Try adjusting your search criteria or filter selections to view candidates.</p>
+    <% if (hasActiveFilters) { %>
+      <a href="/recruiter/applicants" class="btn btn-secondary btn-sm" style="margin-top: 12px;">Clear all filters</a>
+    <% } %>
   </div>
 <% } else { %>
   <div class="table-wrap">
     <table>
       <thead>
-        <tr><th>Applicant</th><th>Job</th><th>Applied</th><th>Status</th><th>Actions</th></tr>
+        <tr>
+          <th>Candidate</th>
+          <th>Applied For</th>
+          <th>Applied Date</th>
+          <th>Current Status</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
       </thead>
       <tbody>
         <% applications.forEach(function (application) { %>
           <tr>
             <td>
               <div class="cell-user">
-                <span class="avatar-sm" style="background: <%= colorForName(application.name) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;"><%= initialsFor(application.name) %></span>
-                <div><div class="name"><%= application.name %></div><div class="sub"><%= application.email %></div></div>
+                <span class="avatar-sm" style="background: <%= colorForName(application.name) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">
+                  <%= initialsFor(application.name) %>
+                </span>
+                <div>
+                  <div class="name" style="font-weight: 600;"><%= application.name %></div>
+                  <div class="sub"><%= application.email %></div>
+                </div>
               </div>
             </td>
-            <td><%= application.job.designation %><div class="sub"><%= application.job.companyName %></div></td>
+            <td>
+              <div style="font-weight: 500;"><%= application.job.designation %></div>
+              <div class="sub"><%= application.job.companyName %></div>
+            </td>
             <td><%= formatDate(application.createdAt) %></td>
-            <td><span class="status-badge"><%= application.status.replaceAll("_", " ") %></span></td>
-            <td><a href="/recruiter/applicants/<%= application.id %>" class="btn btn-secondary btn-sm">Review</a></td>
+            <td>
+              <span class="status-badge status-<%= application.status.toLowerCase() %>">
+                <%= application.status.replaceAll("_", " ") %>
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <a href="/recruiter/applicants/<%= application.id %>" class="btn btn-secondary btn-sm" style="padding: 5px 14px; font-weight: 600;">
+                Review candidate
+              </a>
+            </td>
           </tr>
         <% }) %>
       </tbody>
     </table>
   </div>
-  <nav class="pagination" aria-label="Applicant pages">
-    <% if (pagination.page > 1) { %><a href="/recruiter/applicants?<%= pageParams(pagination.page - 1) %>" class="btn btn-secondary btn-sm">Previous</a><% } %>
-    <span>Page <%= pagination.page %> of <%= pagination.pages %></span>
-    <% if (pagination.page < pagination.pages) { %><a href="/recruiter/applicants?<%= pageParams(pagination.page + 1) %>" class="btn btn-secondary btn-sm">Next</a><% } %>
+
+  <nav class="pagination" aria-label="Applicant pages" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+    <div>
+      <% if (pagination.page > 1) { %>
+        <a href="/recruiter/applicants?<%= pageParams(pagination.page - 1) %>" class="btn btn-secondary btn-sm">
+          <%- icon('arrow-left') %> Previous
+        </a>
+      <% } %>
+    </div>
+    <span style="font-size: 0.88rem; color: var(--color-text-muted); font-weight: 500;">
+      Page <%= pagination.page %> of <%= pagination.pages %> (<%= pagination.total %> total)
+    </span>
+    <div>
+      <% if (pagination.page < pagination.pages) { %>
+        <a href="/recruiter/applicants?<%= pageParams(pagination.page + 1) %>" class="btn btn-secondary btn-sm">
+          Next <%- icon('arrow-right') %>
+        </a>
+      <% } %>
+    </div>
   </nav>
 <% } %>

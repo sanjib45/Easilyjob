@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { issueAuthSession, clearAuthCookies, revokeRefreshToken, cookieNames } from "../services/token.service.js";
-import { sendVerificationEmail } from "../services/email.service.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../services/email.service.js";
 
 const hashVerificationToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
 const normalizeRole = (role) => (String(role || "").toUpperCase() === "RECRUITER" ? "RECRUITER" : "APPLICANT");
@@ -85,4 +85,65 @@ export const handleResendVerification = asyncHandler(async (req, res) => {
   const result = await sendVerificationEmail(user, verifyToken, requestAppUrl(req));
   req.flash(result.status === "sent" ? "success" : "error", verificationMessage(result.status, "Verification email sent. Check your inbox."));
   res.redirect("/jobs");
+});
+
+export const renderForgotPassword = (req, res) => res.render("users/forgot-password", { title: "Forgot Password" });
+
+export const handleForgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const normalizedEmail = email.toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  
+  if (user) {
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: hashVerificationToken(resetToken),
+        resetTokenExpires: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+      }
+    });
+    await sendPasswordResetEmail(user, resetToken, requestAppUrl(req));
+  }
+  
+  req.flash("success", "If an account with that email exists, a password reset link has been sent.");
+  res.redirect("/forgot-password");
+});
+
+export const renderResetPassword = asyncHandler(async (req, res) => {
+  const token = String(req.query.token || "");
+  const user = await prisma.user.findFirst({
+    where: { resetToken: hashVerificationToken(token), resetTokenExpires: { gt: new Date() } }
+  });
+  
+  if (!user) {
+    req.flash("error", "Password reset link is invalid or has expired.");
+    return res.redirect("/forgot-password");
+  }
+  
+  res.render("users/reset-password", { title: "Reset Password", token });
+});
+
+export const handleResetPassword = asyncHandler(async (req, res) => {
+  const { token, password } = req.body;
+  const user = await prisma.user.findFirst({
+    where: { resetToken: hashVerificationToken(token), resetTokenExpires: { gt: new Date() } }
+  });
+  
+  if (!user) {
+    req.flash("error", "Password reset link is invalid or has expired.");
+    return res.redirect("/forgot-password");
+  }
+  
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash: await bcrypt.hash(password, 12),
+      resetToken: null,
+      resetTokenExpires: null
+    }
+  });
+  
+  req.flash("success", "Your password has been updated. Please log in.");
+  res.redirect("/login");
 });

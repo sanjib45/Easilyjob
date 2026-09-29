@@ -35,6 +35,31 @@ const indexes = {
     [{ tokenHash: 1 }, { unique: true }],
     [{ userId: 1 }],
   ],
+  ApplicationStatusHistory: [
+    [{ applicationId: 1, createdAt: 1 }],
+    [{ actorId: 1, createdAt: 1 }],
+  ],
+  Interview: [
+    [{ recruiterId: 1, scheduledAt: 1, status: 1 }],
+    [{ recruiterId: 1, status: 1, scheduledAt: 1 }],
+    [{ recruiterId: 1, createdAt: 1 }],
+    [{ applicationId: 1, scheduledAt: 1 }],
+    [{ jobId: 1, scheduledAt: 1 }],
+  ],
+  InterviewEvaluation: [
+    [{ interviewId: 1 }, { unique: true }],
+    [{ recruiterId: 1, createdAt: 1 }],
+    [{ applicationId: 1, createdAt: 1 }],
+  ],
+  InterviewResult: [
+    [{ interviewId: 1 }, { unique: true }],
+    [{ applicationId: 1 }],
+    [{ recruiterId: 1, sharedAt: 1 }],
+  ],
+  EmailOutbox: [
+    [{ status: 1, nextAttemptAt: 1 }],
+    [{ toEmail: 1, createdAt: 1 }],
+  ],
   EmailLog: [],
 };
 
@@ -48,6 +73,25 @@ try {
     }
     console.log(`${collectionName}: ready`);
   }
+
+  // Patch any legacy documents in MongoDB with null/missing timestamps
+  const now = new Date();
+  for (const collName of ["User", "Job", "Application", "Interview", "EmailOutbox"]) {
+    await database.collection(collName).updateMany(
+      { $or: [{ updatedAt: null }, { updatedAt: { $exists: false } }] },
+      { $set: { updatedAt: now } }
+    );
+    await database.collection(collName).updateMany(
+      { $or: [{ createdAt: null }, { createdAt: { $exists: false } }] },
+      { $set: { createdAt: now } }
+    );
+  }
+  await database.collection("Application").updateMany(
+    { $or: [{ statusUpdatedAt: null }, { statusUpdatedAt: { $exists: false } }] },
+    { $set: { statusUpdatedAt: now } }
+  );
+  console.log("Legacy null timestamp fields patched.");
+
   console.log(`MongoDB database '${databaseName}' is ready.`);
 } finally {
   await client.close();

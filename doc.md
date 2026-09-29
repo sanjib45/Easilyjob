@@ -2,6 +2,21 @@
 
 Living document. **Update this file whenever logic, architecture, schema, or security behavior changes.**
 
+## Change Log
+
+### 2026-09-19 — Phase 1: Shared Shell Integration & Navigation System
+- Created unified master layout [`views/layouts/app-shell.ejs`](file:///c:/Users/santr/OneDrive/Desktop/jobProtalEasily/views/layouts/app-shell.ejs) and partials (`sidebar`, `topbar`, `theme-toggle`, `user-card`, `page-header`, `stat-card`, `empty-state`, `pagination`).
+- Created unified stylesheet [`public/css/shell.css`](file:///c:/Users/santr/OneDrive/Desktop/jobProtalEasily/public/css/shell.css) providing CSS variable tokens, responsive drawer rules (`@media (max-width: 1024px)`), desktop toggle hiding (`@media (min-width: 1025px)`), and search input icon padding (`padding-left: 42px`).
+- Created role navigation registry [`config/navigation.js`](file:///c:/Users/santr/OneDrive/Desktop/jobProtalEasily/config/navigation.js) with longest-prefix active route matching and badge count capping (`99+`).
+- Created [`middleware/shell.js`](file:///c:/Users/santr/OneDrive/Desktop/jobProtalEasily/middleware/shell.js) setting `Cache-Control: private, no-store`.
+
+### 2026-09-19 — Phase 1: Universal Confirmation Modal Implementation
+- Extended declarative confirmation modal API (`data-confirm`, `data-confirm-title`, `data-confirm-message`, `data-confirm-action`, `data-confirm-variant="danger|primary"`).
+- Applied danger variant to job deletion, logout, and status revocations.
+- Applied primary variant to job posting, job editing, candidate status updates, interview scheduling, scorecard saving, and result sharing.
+- Added full ARIA accessibility (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-describedby`), focus trap, ESC/backdrop cancel, scroll locking, HTML sanitization, double-submit protection, and `pageshow`/bfcache state restoration.
+- Created candidate applicant routes (`/applicant/applications` and `/applicant/profile`) resolving 404 links.
+
 ---
 
 ## Project overview
@@ -217,6 +232,144 @@ Teal/slate design system, Inter font, SVG icons, sticky header, job cards, hero 
 ### 2026-07-17 — Initial hardening (pre-Prisma)
 
 Routes/views, bcrypt, CSRF, helmet, rate limits, multer — superseded by Prisma/JWT upgrade above.
+
+---
+
+### 2026-09-19 — Recruiter Portal P1 (Router Restructure) & P2 (Repository Layer & Multi-file Schema)
+
+1. **What changed:**
+   - **Route Restructure:** `app.js` now mounts only `routes/index.js`. `routes/recruiter/index.js` applies `authenticate -> requireRole(RECRUITER) -> requireVerified` once and delegates to modular sub-routers (`dashboard.routes.js`, `applicants.routes.js`, `interviews.routes.js`, `jobs.routes.js`).
+   - **Bug Fix:** Fixed role casing mismatch in `header.ejs` (`user.role === 'RECRUITER'`).
+   - **Prisma Schema Split:** Converted monolithic `schema.prisma` into multi-file domain schemas under `prisma/schema/` (`base.prisma`, `user.prisma`, `job.prisma`, `application.prisma`, `interview.prisma`, `email.prisma`) using `prismaSchemaFolder`.
+   - **Model Additions:** Added `InterviewResult` model with strict public-safe projection fields.
+   - **Repository Layer:** Created `repositories/application.repository.js`, `repositories/interview.repository.js`, `repositories/job.repository.js`, `repositories/email.repository.js`. Every recruiter repository function takes `recruiterId` as its first parameter to enforce tenant data isolation.
+   - **Layering Enforcement:** Refactored `controllers/recruiter.controller.js`, `controllers/job.controller.js`, `services/recruiter-review.service.js`, `services/interview.service.js`, and `services/email-outbox.service.js` so controllers and services never import or query Prisma directly. Extracted `services/dashboard.service.js`.
+   - **Smoke Test Fix:** Fixed unthrottled concurrent event listener execution in `scripts/smoke-test.mjs`.
+
+2. **Why:**
+   - Enforces strict clean architecture (`router -> validator -> controller -> service -> repository`), prevents tenant data leakage, and ensures scalability.
+
+3. **Schema / env / migration impact:**
+   - Schema split under `prisma/schema/`. Run `npm run db:migrate` (or `npx prisma generate`) to sync indexes and client.
+
+4. **How to test:**
+   - Run `npm test`.
+
+---
+
+### 2026-09-19 — Recruiter Portal P3 (Recruiter Layout & Left Sidebar Shell)
+
+1. **What changed:**
+   - **Dedicated Recruiter Layout:** Created `views/layouts/recruiter.ejs` with a responsive two-column left-sidebar shell, mobile drawer, and top bar. Public routes retain standard top-navbar layout in `views/layout.ejs`.
+   - **Recruiter Sidebar Partial:** Created `views/recruiter/partials/sidebar.ejs` with verified profile info, active route indicators (`/recruiter`, `/jobs/new`, `/recruiter/applicants`, `/recruiter/interviews`), public job board link, and secure logout action.
+   - **Design System Stylesheet:** Created `public/css/recruiter.css` implementing responsive layout, mobile drawer animations, audit timeline nodes, form score grids, and shared result banners.
+   - **Enhanced Recruiter Views:**
+     - `views/recruiter/recruiter-dashboard.ejs`: Stat cards with visual hierarchy, job status indicators (Active/Closed/Expired), candidate counts, quick actions.
+     - `views/recruiter/applicants.ejs`: Filter controls (search, job, status, sort, reset), styled candidate list with status badges, pagination.
+     - `views/recruiter/applicant-detail.ejs`: Detail grid, resume download, private recruiter notes, interview scheduling, evaluation form with newly added `strengths` and `concerns` fields, share-result card, and status history timeline.
+     - `views/recruiter/interviews.ejs`: Scheduled rounds table, evaluation score badges, share-result links.
+     - `views/recruiter/interviews/share-result.ejs`: Candidate-safe outcome/summary review and submission form.
+
+2. **Why:**
+   - Satisfies Rule 8 requirement for a recruiter layout with responsive left sidebar and mobile drawer without impacting public job seekers.
+
+3. **Schema / env / migration impact:**
+   - No schema changes.
+
+4. **How to test:**
+   - Run `npm test`.
+
+---
+
+### 2026-09-19 — Recruiter Portal P4 (Status Transition Policies)
+
+1. **What changed:**
+   - **Application Transition Policy:** Created `policies/applicationTransitions.js` with `APPLICATION_TRANSITIONS` graph and `assertApplicationTransition(from, to)`. Blocks illegal jumps (e.g. `HIRED -> NEW` or `REJECTED -> SHORTLISTED`) with a 400 `AppError`. Terminal states (`HIRED`, `REJECTED`) are locked. Same-status submissions are handled as idempotent no-ops (no duplicate history rows or duplicate emails).
+   - **Interview Transition Policy:** Created `policies/interviewTransitions.js` with `INTERVIEW_TRANSITIONS` graph and `assertInterviewTransition(from, to)`. Prevents reopening `COMPLETED` or `CANCELLED` interviews.
+   - **Service Integration:** Integrated `assertApplicationTransition` into `services/recruiter-review.service.js` and `assertInterviewTransition` into `services/interview.service.js`.
+
+2. **Why:**
+   - Satisfies Rule 7 requiring all status transitions to run through `policies/` to ensure data integrity and prevent illegal lifecycle jumps.
+
+3. **Schema / env / migration impact:**
+   - No schema changes.
+
+4. **How to test:**
+   - Run `npm test`.
+
+---
+
+### 2026-09-19 — Recruiter Portal P5 (Interviews, Private Evaluations & Share Result Email)
+
+1. **What changed:**
+   - **Modular Recruiter Validators:** Created `validators/recruiter/interview.validators.js`, `validators/recruiter/evaluation.validators.js`, and `validators/recruiter/result.validators.js`.
+   - **Public-Safe Email Template:** Added `INTERVIEW_RESULT` template to `services/email.service.js`. Strictly projects `{ outcome, summary, applicantName, jobTitle, companyName }` without internal scores or private notes (Rule 5 compliance).
+   - **Share Result Logic:** Added `shareInterviewResult` to `services/interview.service.js`. Validates `COMPLETED` status, creates `InterviewResult` DB record, queues `INTERVIEW_RESULT` outbox row, and delivers email idempotently (`INTERVIEW_RESULT:${interviewId}`).
+   - **Share Result Routes & View:** Created `GET` and `POST` routes `/recruiter/interviews/:interviewId/share-result` in `routes/recruiter/interviews.routes.js`, rendered via `views/recruiter/interviews/share-result.ejs`.
+
+2. **Why:**
+   - Enables recruiters to conduct interview rounds, write private scorecard evaluations, and share candidate-safe outcomes via outbox email while enforcing data privacy boundaries.
+
+3. **Schema / env / migration impact:**
+   - Uses `InterviewResult` model created in P2.
+
+4. **How to test:**
+   - Run `npm test`.
+
+---
+
+### 2026-09-19 — Recruiter Portal P6 (In-Process Job Cache & Outbox Retry Worker)
+
+1. **What changed:**
+   - **In-Process TTL Cache:** Created `utils/cache.js` exporting `jobCache` (60s default TTL) and `invalidateJobCache()`. Public job board listings (`renderAllJobs` in `controllers/job.controller.js`) check `jobCache` before hitting MongoDB.
+   - **Write-Through Invalidation:** Job creation (`handleNewJob`), updates (`handleUpdateJob`), deletions (`handleDeleteJob`), and status changes (`handleCloseJob`) trigger `invalidateJobCache()` to maintain cache freshness. Never caches recruiter routes or applicant data.
+   - **Background Outbox Retry Worker:** Created `workers/email-worker.js` exporting `startOutboxWorker()`, `processOutboxTick()`, and `stopOutboxWorker()`.
+   - **Lifecycle Integration:** `app.js` initializes `startOutboxWorker()` on startup and gracefully stops the worker on `SIGINT`/`SIGTERM`. Polls pending/failed outbox rows with `attempts < 5` and `nextAttemptAt <= now()`.
+
+2. **Why:**
+   - Satisfies Rule 9 requiring cached public job listings and Rule 6 requiring background outbox retries for resilient email delivery.
+
+3. **Schema / env / migration impact:**
+   - No schema changes.
+
+4. **How to test:**
+   - Run `npm test`.
+
+---
+
+### 2026-09-19 — Recruiter Portal P7 (Extended Smoke & Multi-Tenant Data Isolation Tests)
+
+1. **What changed:**
+   - **Unauthenticated Route Sweeps:** Automated checks in `scripts/smoke-test.mjs` verifying `/recruiter`, `/recruiter/applicants`, and `/recruiter/interviews` return 302 redirects when unauthenticated.
+   - **Cross-Tenant Data Isolation Verification:** Automated registering a distinct Recruiter B and attempting cross-tenant access to Recruiter A's candidates/interviews. Verified Recruiter B gets a strict HTTP 404 (zero data leaks across recruiters).
+   - **Share Result Lifecycle Guard:** Verified attempting to access `/recruiter/interviews/:id/share-result` before interview status is `COMPLETED` returns an HTTP 400 Bad Request error.
+   - **Bounds & Input Hardening:** Verified `?page=9999` returns 200 with an empty array (no 500 crashes) and malicious sort strings (`?sort=DROP TABLE`) fall back safely to `newest`.
+
+2. **Why:**
+   - Satisfies Rule 10 requiring comprehensive smoke and multi-tenant isolation tests.
+
+3. **Schema / env / migration impact:**
+   - No schema changes.
+
+4. **How to test:**
+   - Run `npm test`.
+
+---
+
+### 2026-09-19 — Bug Fix: Optional Timestamps across Models & Legacy MongoDB Patch
+
+1. **What changed:**
+   - **Schema Hardening:** Updated `createdAt` and `updatedAt` to optional `DateTime?` across all Prisma domain schemas (`job.prisma`, `user.prisma`, `application.prisma`, `interview.prisma`, `email.prisma`). Regenerated Prisma Client (`npx prisma generate`).
+   - **Database Patching:** Added an automatic update migration in [scripts/setup-mongodb.mjs](file:///c:/Users/santr/OneDrive/Desktop/jobProtalEasily/scripts/setup-mongodb.mjs) (`npm run db:migrate`) to set `updatedAt: new Date()` and `createdAt: new Date()` for any legacy documents in MongoDB where timestamp fields were `null` or missing.
+
+2. **Why:**
+   - Legacy documents created in MongoDB prior to timestamp fields being enforced had `null` stored in MongoDB. When Prisma loaded records, it threw a 500 error (`Error converting field "updatedAt" of expected non-nullable type "DateTime", found incompatible value of "null"`). Optional timestamp typing in Prisma schema combined with the MongoDB document patch resolves this error for all current and future queries.
+
+3. **Schema / env / migration impact:**
+   - Updated `prisma/schema/*.prisma`. Ran `npm run db:migrate` and `npx prisma generate`.
+
+4. **How to test:**
+   - Run `npm test` or start app (`npm start`) and open `/jobs`.
 
 ---
 

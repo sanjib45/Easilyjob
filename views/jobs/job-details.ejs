@@ -17,11 +17,11 @@
     </div>
   </div>
 
-  <% if (user && user.role === "recruiter" && user.id === job.recruiterId) { %>
+  <% if (user && user.role?.toUpperCase() === "RECRUITER" && user.id === job.recruiterId) { %>
     <div class="card-actions">
       <a href="/jobs/<%= job.id %>/edit" class="btn btn-secondary btn-sm"><%- icon('edit') %> Edit</a>
       <a href="/jobs/<%= job.id %>/applicants" class="btn btn-secondary btn-sm"><%- icon('users') %> Applicants (<%= job.applicants.length %>)</a>
-      <form action="/jobs/<%= job.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this job posting?');">
+      <form action="/jobs/<%= job.id %>/delete" method="POST" class="inline-form" data-confirm data-confirm-title="Delete Job Posting" data-confirm-message="Are you sure you want to permanently delete this job listing?" data-confirm-action="Delete" data-confirm-variant="danger">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
         <button type="submit" class="btn btn-danger btn-sm"><%- icon('trash') %> Delete</button>
       </form>
@@ -70,7 +70,7 @@
         <%- icon('check-circle') %>
         <span>You've already applied to this job.</span>
       </div>
-    <% } else if (user && user.role === "recruiter") { %>
+    <% } else if (user && user.role?.toUpperCase() === "RECRUITER") { %>
       <p class="hint">Recruiters can't apply to job postings.</p>
     <% } else if (daysUntil(job.applyby) < 0) { %>
       <div class="alert alert-error">

@@ -1,0 +1,16 @@
+<header class="app-mobile-bar">
+  <button type="button" class="mobile-toggle-btn" id="mobileMenuBtn" aria-label="Toggle navigation drawer" aria-expanded="false" aria-controls="appSidebar">
+    <%- icon('menu') %>
+  </button>
+  <a href="<%= (user && String(user.role).toUpperCase() === 'RECRUITER') ? '/recruiter' : '/jobs' %>" class="mobile-brand">
+    <span class="logo-mark" style="color:var(--brand-primary); display:inline-flex;"><%- icon('briefcase') %></span>
+    <span style="font-weight:700; color:var(--color-text-main);">Easily Jobs</span>
+  </a>
+  <% if (user) { %>
+    <span class="avatar-sm" style="background: <%= colorForName(user.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center;">
+      <%= initialsFor(user.name) %>
+    </span>
+  <% } else { %>
+    <span style="width:32px;"></span>
+  <% } %>
+</header>

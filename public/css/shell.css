@@ -1,0 +1,428 @@
+/* ============================================================
+   Unified App Shell & Component Design System (shell.css)
+   Serves Recruiter, Candidate, and Public Workspaces
+   ============================================================ */
+
+/* ── Theme Tokens (Light / Dark Mode Support) ───────────────── */
+:root {
+  --color-bg-body: #f8fafc;
+  --color-bg-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-text-main: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-subtle: #94a3b8;
+
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e2e8f0;
+  --sidebar-text: #64748b;
+  --sidebar-text-active: #0f172a;
+  --sidebar-hover-bg: rgba(13, 148, 136, 0.08);
+  --sidebar-hover-text: #0d9488;
+  --sidebar-profile-bg: #f8fafc;
+
+  --brand-primary: #0d9488;
+  --brand-hover: #0f766e;
+  --brand-gradient: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+  --brand-shadow: rgba(13, 148, 136, 0.35);
+
+  color-scheme: light dark;
+}
+
+html[data-theme="dark"] {
+  --color-bg-body: #0b0f19;
+  --color-bg-surface: #111827;
+  --color-border: #1f2937;
+  --color-border-subtle: #111827;
+  --color-text-main: #f9fafb;
+  --color-text-muted: #9ca3af;
+  --color-text-subtle: #6b7280;
+
+  --sidebar-bg: #0f172a;
+  --sidebar-border: #1e293b;
+  --sidebar-text: #9ca3af;
+  --sidebar-text-active: #ffffff;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-hover-text: #f8fafc;
+  --sidebar-profile-bg: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Top-Right Topbar (Theme + Logout) ──────────────────────── */
+.app-topbar {
+  position: fixed;
+  top: 14px;
+  right: 20px;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-main);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+  white-space: nowrap;
+}
+
+.topbar-btn:hover {
+  background: var(--color-border);
+  border-color: var(--brand-primary);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+}
+
+/* Theme toggle icon button — circular */
+.topbar-theme-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1rem;
+}
+
+.topbar-theme-btn .icon-sun,
+.topbar-theme-btn .icon-moon {
+  transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+/* In light mode: show MOON (click to switch to dark), hide SUN */
+html[data-theme="light"] .topbar-theme-btn .icon-sun  { display: none !important; }
+html[data-theme="light"] .topbar-theme-btn .icon-moon { display: inline-flex !important; }
+
+/* In dark mode: show SUN (click to switch to light), hide MOON */
+html[data-theme="dark"]  .topbar-theme-btn .icon-moon { display: none !important; }
+html[data-theme="dark"]  .topbar-theme-btn .icon-sun  { display: inline-flex !important; }
+
+/* Fallback default (dark theme default) */
+.topbar-theme-btn .icon-moon { display: none; }
+.topbar-theme-btn .icon-sun  { display: inline-flex; }
+
+/* Logout topbar button */
+.topbar-logout-btn {
+  color: #f87171;
+  border-color: rgba(248,113,113,0.25);
+}
+.topbar-logout-btn:hover {
+  background: rgba(248,113,113,0.10);
+  border-color: #f87171;
+}
+
+/* ── App Shell Root Container ───────────────────────────────── */
+.app-shell-body {
+  background-color: var(--color-bg-body);
+  color: var(--color-text-main);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ── Sticky Left Sidebar Drawer ─────────────────────────────── */
+.app-sidebar {
+  width: 270px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 22px 18px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--sidebar-border);
+  margin-bottom: 20px;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--sidebar-text-active);
+}
+
+.sidebar-logo .logo-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--brand-gradient);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--brand-shadow);
+  flex-shrink: 0;
+}
+
+.sidebar-logo .logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logo .logo-title {
+  font-weight: 800;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--sidebar-text-active);
+}
+
+.sidebar-logo .logo-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+/* ── Sidebar Navigation ─────────────────────────────────────── */
+.sidebar-nav {
+  flex: 1;
+}
+
+.nav-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--sidebar-text);
+  padding: 0 10px;
+  margin-bottom: 8px;
+  margin-top: 18px;
+}
+.nav-section-title:first-child {
+  margin-top: 0;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: var(--sidebar-text);
+  font-weight: 500;
+  font-size: 0.93rem;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.nav-link:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--sidebar-hover-text);
+  transform: translateX(2px);
+}
+
+.nav-link.active {
+  background: var(--brand-gradient);
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 4px 14px var(--brand-shadow);
+}
+.nav-link.active .nav-icon {
+  color: #ffffff !important;
+}
+
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sidebar-text);
+  transition: color 0.18s ease;
+}
+
+/* ── Pinned Bottom Profile & Footer Card ────────────────────── */
+.sidebar-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--sidebar-border);
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--sidebar-profile-bg);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 12px;
+}
+
+.profile-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--sidebar-text-active);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-email {
+  font-size: 0.74rem;
+  color: var(--sidebar-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.verified-dot {
+  color: #2dd4bf;
+  display: inline-flex;
+  font-size: 1rem;
+}
+
+.sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  color: #f87171;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+.sidebar-logout-btn:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+/* ── Main Workspace Content Area ────────────────────────────── */
+.app-main-wrap {
+  flex: 1;
+  margin-left: 270px;
+  min-width: 0;
+  padding: 32px 40px 60px;
+}
+
+.app-main {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Search Input Icon Padding Fix (Defect 3) ────────────────── */
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.search-field svg,
+.search-field .icon {
+  position: absolute;
+  left: 14px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.search-field input {
+  width: 100%;
+  padding-left: 42px !important;
+}
+
+/* ── Mobile Responsive Drawer Rules (Defect 2) ─────────────── */
+.app-mobile-bar {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+}
+
+@media (max-width: 1024px) {
+  .app-mobile-bar {
+    display: flex;
+  }
+  .app-sidebar {
+    transform: translateX(-100%);
+  }
+  .app-sidebar.is-open {
+    transform: translateX(0);
+  }
+  .app-main-wrap {
+    margin-left: 0;
+    padding: 80px 20px 40px;
+  }
+  .sidebar-close-btn {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mobile-toggle-btn {
+    display: none !important;
+  }
+}

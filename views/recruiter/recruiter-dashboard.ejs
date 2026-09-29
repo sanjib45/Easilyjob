@@ -1,22 +1,27 @@
-<div class="page-header">
+<div class="page-header" style="margin-bottom: 24px;">
   <div>
-    <span class="eyebrow">Recruiter</span>
-    <h1>Your job postings</h1>
-    <p class="subtitle">Manage listings and review applicants.</p>
+    <span class="eyebrow">Recruiter workspace</span>
+    <h1 style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 6px;">Dashboard</h1>
+    <p class="subtitle" style="margin: 0; color: var(--color-text-muted);">Overview of your active job listings, applicant reviews, and interviews.</p>
   </div>
-  <a href="/jobs/new" class="btn btn-primary">
-    <%- icon('plus') %> Post a job
-  </a>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <a href="/recruiter/applicants" class="btn btn-secondary">
+      <%- icon('users') %> View applicants
+    </a>
+    <a href="/jobs/new" class="btn btn-primary">
+      <%- icon('plus') %> Post a job
+    </a>
+  </div>
 </div>
 
-<div class="stat-grid">
+<div class="stat-grid" style="margin-bottom: 28px;">
   <div class="stat-card">
     <span class="stat-icon" style="background: var(--brand-50); color: var(--brand-600);">
       <%- icon('briefcase') %>
     </span>
     <div>
       <div class="stat-value"><%= stats.totalJobs %></div>
-      <div class="stat-label">Total jobs posted</div>
+      <div class="stat-label">Total jobs</div>
     </div>
   </div>
   <div class="stat-card">
@@ -25,20 +30,20 @@
     </span>
     <div>
       <div class="stat-value"><%= stats.openRoles %></div>
-      <div class="stat-label">Currently open</div>
+      <div class="stat-label">Open roles</div>
     </div>
   </div>
   <div class="stat-card">
-    <span class="stat-icon" style="background: #fff7ed; color: var(--warning-500);">
+    <span class="stat-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
       <%- icon('users') %>
     </span>
     <div>
       <div class="stat-value"><%= stats.totalApplicants %></div>
-      <div class="stat-label">Total applicants</div>
+      <div class="stat-label">Applicants</div>
     </div>
   </div>
   <div class="stat-card">
-    <span class="stat-icon" style="background: #fef2f2; color: #dc2626;">
+    <span class="stat-icon" style="background: rgba(219, 39, 119, 0.15); color: #db2777;">
       <%- icon('check-circle') %>
     </span>
     <div>
@@ -47,7 +52,7 @@
     </div>
   </div>
   <div class="stat-card">
-    <span class="stat-icon" style="background: #eff6ff; color: #2563eb;">
+    <span class="stat-icon" style="background: rgba(37, 99, 235, 0.15); color: #3b82f6;">
       <%- icon('calendar') %>
     </span>
     <div>
@@ -57,54 +62,81 @@
   </div>
 </div>
 
-<% if (jobs.length === 0) { %>
-  <div class="empty-state">
-    <%- icon('inbox', 'icon-xl') %>
-    <h3>You haven't posted any jobs yet</h3>
-    <p>Get started by posting your first opening.</p>
-    <a href="/jobs/new" class="btn btn-primary btn-sm">Post your first job</a>
+<section class="panel">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h2 style="font-size: 1.15rem; font-weight: 700; margin: 0;">Your Job Postings</h2>
+      <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 2px 0 0;">Manage your job listings, track applications, and edit positions.</p>
+    </div>
+    <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted);"><%= jobs.length %> total</span>
   </div>
-<% } else { %>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Location</th>
-          <th>Openings</th>
-          <th>Applicants</th>
-          <th>Apply by</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% jobs.forEach(function (job) { %>
+
+  <% if (jobs.length === 0) { %>
+    <div class="empty-state" style="padding: 48px 24px;">
+      <%- icon('inbox', 'icon-xl') %>
+      <h3>You haven't posted any jobs yet</h3>
+      <p>Start receiving candidate applications by publishing your first open position.</p>
+      <a href="/jobs/new" class="btn btn-primary btn-sm" style="margin-top: 12px;">Post your first job</a>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
           <tr>
-            <td>
-              <div class="cell-user">
-                <span class="avatar-sm" style="background: <%= colorForName(job.companyname) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;"><%= job.companyname.charAt(0).toUpperCase() %></span>
-                <div>
-                  <div class="name"><a href="/jobs/<%= job.id %>"><%= job.jobdesignation %></a></div>
-                  <div class="sub"><%= job.companyname %></div>
-                </div>
-              </div>
-            </td>
-            <td><%= job.joblocation %></td>
-            <td><%= job.openings %></td>
-            <td><a href="/recruiter/applicants?jobId=<%= job.id %>"><%= job.applicants.length %></a></td>
-            <td><%= formatDate(job.applyby) %></td>
-            <td>
-              <div class="card-actions">
-                <a href="/jobs/<%= job.id %>/edit" class="btn btn-secondary btn-sm"><%- icon('edit') %></a>
-                <form action="/jobs/<%= job.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this job posting?');">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                  <button type="submit" class="btn btn-danger btn-sm"><%- icon('trash') %></button>
-                </form>
-              </div>
-            </td>
+            <th>Position & Company</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Openings</th>
+            <th>Applicants</th>
+            <th>Apply by</th>
+            <th style="text-align: right;">Actions</th>
           </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
-<% } %>
+        </thead>
+        <tbody>
+          <% jobs.forEach(function (job) { %>
+            <% const isOpen = job.status === "OPEN" && new Date(job.applyby) >= new Date(); %>
+            <tr>
+              <td>
+                <div class="cell-user">
+                  <span class="avatar-sm" style="background: <%= colorForName(job.companyname) %>; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:700;">
+                    <%= job.companyname.charAt(0).toUpperCase() %>
+                  </span>
+                  <div>
+                    <div class="name"><a href="/jobs/<%= job.id %>" style="font-weight: 600;"><%= job.jobdesignation %></a></div>
+                    <div class="sub"><%= job.companyname %></div>
+                  </div>
+                </div>
+              </td>
+              <td><%= job.joblocation %></td>
+              <td>
+                <span class="status-badge" style="<%= isOpen ? 'background:var(--success-50);color:var(--success-700);' : 'background:var(--gray-100);color: var(--color-text-muted);' %>">
+                  <%= isOpen ? "Active" : (job.status === "CLOSED" ? "Closed" : "Expired") %>
+                </span>
+              </td>
+              <td><%= job.openings %></td>
+              <td>
+                <a href="/recruiter/applicants?jobId=<%= job.id %>" class="btn btn-secondary btn-sm" style="padding: 3px 10px; font-weight: 600;">
+                  <%- icon('users') %> <%= job.applicants.length %>
+                </a>
+              </td>
+              <td><%= formatDate(job.applyby) %></td>
+              <td style="text-align: right;">
+                <div class="card-actions" style="justify-content: flex-end;">
+                  <a href="/jobs/<%= job.id %>/edit" class="btn btn-secondary btn-sm" title="Edit posting">
+                    <%- icon('edit') %>
+                  </a>
+                  <form action="/jobs/<%= job.id %>/delete" method="POST" class="inline-form" data-confirm data-confirm-title="Delete Job Posting" data-confirm-message="Are you sure you want to permanently delete this job listing?" data-confirm-action="Delete" data-confirm-variant="danger">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                    <button type="submit" class="btn btn-danger btn-sm" title="Delete posting">
+                      <%- icon('trash') %>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>

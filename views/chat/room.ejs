@@ -1,0 +1,117 @@
+<div class="chat-room-container">
+  <div class="chat-room-header">
+    <a href="/messages" class="btn btn-ghost btn-sm">
+      <%- icon('arrow-left') %> Back
+    </a>
+    <div class="chat-user-info">
+      <span class="avatar-sm" style="background: <%= colorForName(otherUser.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; font-size:1rem; border-radius:10px;">
+        <%= initialsFor(otherUser.name) %>
+      </span>
+      <div>
+        <h3 class="chat-user-name"><%= otherUser.name %></h3>
+        <p class="chat-job-subtitle"><%= conversation.application?.job?.designation %> &middot; <%= conversation.application?.job?.companyName %></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-messages-wrap" id="chatMessagesWrap">
+    <% messages.forEach(function (msg) { %>
+      <div class="chat-bubble <%= msg.senderId === user.id ? 'outgoing' : 'incoming' %>">
+        <div class="chat-bubble-content">
+          <p><%= msg.content %></p>
+          <span class="chat-time"><%= formatDate(msg.createdAt) %></span>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+
+  <div class="chat-typing-indicator" id="typingIndicator" style="display: none;">
+    <%- icon('message-square') %> <span><%= otherUser.name %> is typing...</span>
+  </div>
+
+  <form class="chat-input-form" id="chatInputForm">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off" required />
+    <button type="submit" class="btn btn-primary">
+      <%- icon('send') %> Send
+    </button>
+  </form>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  (function () {
+    var conversationId = "<%= conversation.id %>";
+    var userId = "<%= user.id %>";
+    var form = document.getElementById("chatInputForm");
+    var input = document.getElementById("chatInput");
+    var messagesWrap = document.getElementById("chatMessagesWrap");
+    var typingEl = document.getElementById("typingIndicator");
+
+    function scrollToBottom() {
+      if (messagesWrap) {
+        messagesWrap.scrollTop = messagesWrap.scrollHeight;
+      }
+    }
+    scrollToBottom();
+
+    var socket = io({ withCredentials: true });
+
+    socket.on("connect", function () {
+      socket.emit("join_room", conversationId);
+    });
+
+    socket.on("new_message", function (msg) {
+      var isOutgoing = msg.senderId === userId;
+      var div = document.createElement("div");
+      div.className = "chat-bubble " + (isOutgoing ? "outgoing" : "incoming");
+      div.innerHTML =
+        '<div class="chat-bubble-content">' +
+          '<p>' + escapeHtml(msg.content) + '</p>' +
+          '<span class="chat-time">Just now</span>' +
+        '</div>';
+      messagesWrap.appendChild(div);
+      scrollToBottom();
+      if (typingEl) typingEl.style.display = "none";
+    });
+
+    socket.on("user_typing", function (data) {
+      if (data.userId !== userId && typingEl) {
+        typingEl.style.display = "flex";
+        scrollToBottom();
+      }
+    });
+
+    socket.on("user_stop_typing", function (data) {
+      if (data.userId !== userId && typingEl) {
+        typingEl.style.display = "none";
+      }
+    });
+
+    var typingTimeout;
+    input.addEventListener("input", function () {
+      socket.emit("typing", { conversationId: conversationId });
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(function () {
+        socket.emit("stop_typing", { conversationId: conversationId });
+      }, 1500);
+    });
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var text = input.value.trim();
+      if (!text) return;
+      socket.emit("send_message", { conversationId: conversationId, content: text });
+      socket.emit("stop_typing", { conversationId: conversationId });
+      input.value = "";
+    });
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+  })();
+</script>

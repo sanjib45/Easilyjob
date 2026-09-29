@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="<%= typeof currentTheme !== 'undefined' ? currentTheme : 'dark' %>">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof title !== "undefined" && title ? title + " · Candidate Portal · Easily Jobs" : "Candidate Portal · Easily Jobs" %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/shell.css" />
+  <link rel="stylesheet" href="/css/recruiter.css" />
+  <link rel="stylesheet" href="/css/applicant.css" />
+</head>
+<body class="applicant-body">
+  <div class="applicant-shell">
+    <!-- Mobile top bar -->
+    <header class="applicant-mobile-bar">
+      <button type="button" class="mobile-toggle-btn" id="applicantMobileMenuBtn" aria-label="Toggle navigation drawer">
+        <%- icon('menu') %>
+      </button>
+      <a href="/jobs" class="mobile-brand">
+        <span class="logo-mark"><%- icon('briefcase') %></span>
+        <span>Easily Jobs</span>
+      </a>
+      <% if (user) { %>
+        <span class="avatar-sm" style="background: <%= colorForName(user.name) %>; color:#fff; font-weight:700; display:inline-flex; align-items:center; justify-content:center;">
+          <%= initialsFor(user.name) %>
+        </span>
+      <% } else { %>
+        <span style="width:32px;"></span>
+      <% } %>
+    </header>
+
+    <!-- Sidebar navigation drawer -->
+    <aside class="applicant-sidebar" id="applicantSidebar">
+      <%- include('../applicant/partials/sidebar') %>
+    </aside>
+    <div class="sidebar-backdrop" id="applicantSidebarBackdrop"></div>
+
+    <!-- Main workspace content -->
+    <div class="applicant-main-wrap">
+      <main class="applicant-main">
+        <%- include('../partials/flash') %>
+        <%- body %>
+      </main>
+    </div>
+  </div>
+
+  <!-- ── Fixed Top-Right Topbar ── -->
+  <div class="app-topbar" id="appTopbar">
+    <button type="button" class="topbar-btn topbar-theme-btn" id="topbarThemeBtn"
+      aria-label="Toggle theme" title="Toggle light/dark mode">
+      <span class="icon-sun"><%- icon('sun') %></span>
+      <span class="icon-moon"><%- icon('moon') %></span>
+    </button>
+    <% if (user) { %>
+    <form action="/logout" method="POST" style="margin:0;" onsubmit="return confirm('Are you sure you want to log out?')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <button type="submit" class="topbar-btn topbar-logout-btn" title="Log out">
+        <%- icon('log-out') %>
+        <span>Log out</span>
+      </button>
+    </form>
+    <% } %>
+  </div>
+
+  <%- include('../partials/confirm-modal') %>
+
+  <script src="/js/theme-toggle.js"></script>
+  <script src="/js/confirm-modal.js"></script>
+  <script>
+    (function () {
+      var sidebar = document.getElementById("applicantSidebar");
+      var backdrop = document.getElementById("applicantSidebarBackdrop");
+      var openBtn = document.getElementById("applicantMobileMenuBtn");
+      var closeBtn = document.getElementById("sidebarCloseBtn");
+
+      function openSidebar() {
+        if (sidebar) sidebar.classList.add("is-open");
+        if (backdrop) backdrop.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeSidebar() {
+        if (sidebar) sidebar.classList.remove("is-open");
+        if (backdrop) backdrop.classList.remove("is-open");
+        document.body.style.overflow = "";
+      }
+
+      if (openBtn) openBtn.addEventListener("click", openSidebar);
+      if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
+      if (backdrop) backdrop.addEventListener("click", closeSidebar);
+
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") closeSidebar();
+      });
+    })();
+  </script>
+</body>
+</html>

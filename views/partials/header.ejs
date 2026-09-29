@@ -8,7 +8,7 @@
       <a href="/jobs" class="nav-link <%= currentPath === '/jobs' ? 'active' : '' %>">
         <%- icon('search') %> Browse Jobs
       </a>
-      <% if (user && user.role === "recruiter") { %>
+      <% if (user && String(user.role || "").toUpperCase() === "RECRUITER") { %>
         <a href="/recruiter" class="nav-link <%= currentPath === '/recruiter' ? 'active' : '' %>">
           <%- icon('layers') %> Dashboard
         </a>
@@ -28,8 +28,8 @@
         <div class="user-pill">
           <span class="user-avatar" style="background: <%= colorForName(user.name) %>"><%= initialsFor(user.name) %></span>
           <span class="nav-user"><%= user.name %></span>
-          <% if (user.role === "recruiter") { %><span class="role-badge">Recruiter</span><% } %>
-          <form action="/logout" method="POST" class="inline-form">
+          <% if (String(user.role || "").toUpperCase() === "RECRUITER") { %><span class="role-badge">Recruiter</span><% } %>
+          <form action="/logout" method="POST" class="inline-form" onsubmit="return confirm('Are you sure you want to log out?')">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
             <button type="submit" class="btn btn-ghost btn-sm" title="Log out" aria-label="Log out">
               <%- icon('log-out') %>
@@ -40,6 +40,12 @@
         <a href="/login" class="nav-link">Log in</a>
         <a href="/register" class="btn btn-primary btn-sm">Sign up</a>
       <% } %>
+
+      <button type="button" class="topbar-btn topbar-theme-btn" id="topbarThemeBtn"
+        aria-label="Toggle theme" title="Toggle light/dark mode" style="margin-left: 4px;">
+        <span class="icon-sun"><%- icon('sun') %></span>
+        <span class="icon-moon"><%- icon('moon') %></span>
+      </button>
     </nav>
   </div>
 </header>

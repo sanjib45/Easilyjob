@@ -1,6 +1,14 @@
-import { prisma } from "../config/prisma.js";
 import { AppError } from "../utils/AppError.js";
 import { deliverQueuedEmail } from "./email-outbox.service.js";
+import {
+  findOwnedApplication,
+  listOwnedApplications,
+  updateOwnedApplication,
+  createStatusHistory,
+  runInTransaction,
+} from "../repositories/application.repository.js";
+import { upsertOutbox } from "../repositories/email.repository.js";
+import { assertApplicationTransition } from "../policies/applicationTransitions.js";
 
 export const REVIEW_STATUSES = new Set([
   "NEW",
@@ -20,15 +28,7 @@ const shortlistPayload = ({ application, job }) => ({
 });
 
 export const getRecruiterApplication = async (applicationId, recruiterId) => {
-  const application = await prisma.application.findFirst({
-    where: { id: applicationId, job: { recruiterId } },
-    include: {
-      job: true,
-      statusHistory: { orderBy: { createdAt: "desc" } },
-      interviews: { include: { evaluation: true }, orderBy: { scheduledAt: "desc" } },
-    },
-  });
-
+  const application = await findOwnedApplication(recruiterId, applicationId);
   if (!application) throw new AppError("Application not found.", 404);
   return application;
 };
@@ -40,38 +40,29 @@ const sortOrders = {
   status: [{ status: "asc" }, { createdAt: "desc" }, { id: "desc" }],
 };
 
-export const listRecruiterApplications = async ({ recruiterId, search = "", status = "", jobId = "", sort = "newest", page = 1, limit = 25 }) => {
+export const listRecruiterApplications = async ({
+  recruiterId,
+  search = "",
+  status = "",
+  jobId = "",
+  sort = "newest",
+  page = 1,
+  limit = 25,
+}) => {
   const safePage = Math.max(1, Number.parseInt(page, 10) || 1);
   const safeLimit = Math.min(50, Math.max(1, Number.parseInt(limit, 10) || 25));
   const normalizedSearch = String(search).trim();
-  const where = {
-    job: {
-      recruiterId,
-      ...(jobId ? { id: jobId } : {}),
-    },
-    ...(status && REVIEW_STATUSES.has(status) ? { status } : {}),
-    ...(normalizedSearch
-      ? {
-          OR: [
-            { name: { contains: normalizedSearch } },
-            { email: { contains: normalizedSearch } },
-            { job: { designation: { contains: normalizedSearch }, recruiterId } },
-            { job: { companyName: { contains: normalizedSearch }, recruiterId } },
-          ],
-        }
-      : {}),
-  };
   const orderBy = sortOrders[sort] || sortOrders.newest;
-  const [applications, total] = await Promise.all([
-    prisma.application.findMany({
-      where,
-      include: { job: true },
-      orderBy,
-      skip: (safePage - 1) * safeLimit,
-      take: safeLimit,
-    }),
-    prisma.application.count({ where }),
-  ]);
+  const skip = (safePage - 1) * safeLimit;
+
+  const { applications, total } = await listOwnedApplications(recruiterId, {
+    search: normalizedSearch,
+    status: status && REVIEW_STATUSES.has(status) ? status : "",
+    jobId,
+    orderBy,
+    skip,
+    take: safeLimit,
+  });
 
   return {
     applications,
@@ -85,49 +76,66 @@ export const listRecruiterApplications = async ({ recruiterId, search = "", stat
   };
 };
 
-export const updateRecruiterApplication = async ({ applicationId, recruiterId, status, recruiterNote }) => {
+export const updateRecruiterApplication = async ({
+  applicationId,
+  recruiterId,
+  status,
+  recruiterNote,
+}) => {
   if (!REVIEW_STATUSES.has(status)) throw new AppError("Select a valid application status.", 400);
-  if (recruiterNote.length > 2000) throw new AppError("Recruiter notes must be 2,000 characters or fewer.", 400);
+  if (recruiterNote && recruiterNote.length > 2000) {
+    throw new AppError("Recruiter notes must be 2,000 characters or fewer.", 400);
+  }
 
   const current = await getRecruiterApplication(applicationId, recruiterId);
   const changedStatus = current.status !== status;
+
+  if (changedStatus) {
+    assertApplicationTransition(current.status, status);
+  }
+
   const shortlistKey = `APPLICATION_SHORTLISTED:${applicationId}`;
 
-  await prisma.$transaction(async (tx) => {
-    await tx.application.update({
-      where: { id: applicationId },
-      data: {
+  await runInTransaction(async (tx) => {
+    await updateOwnedApplication(
+      recruiterId,
+      applicationId,
+      {
         status,
         recruiterNote: recruiterNote || null,
         statusUpdatedAt: changedStatus ? new Date() : current.statusUpdatedAt,
       },
-    });
+      tx
+    );
 
     if (changedStatus) {
-      await tx.applicationStatusHistory.create({
-        data: {
+      await createStatusHistory(
+        recruiterId,
+        {
           applicationId,
-          actorId: recruiterId,
           fromStatus: current.status,
           toStatus: status,
         },
-      });
+        tx
+      );
     }
 
     if (changedStatus && status === "SHORTLISTED") {
-      await tx.emailOutbox.upsert({
-        where: { idempotencyKey: shortlistKey },
-        update: {},
-        create: {
+      await upsertOutbox(
+        {
           idempotencyKey: shortlistKey,
           toEmail: current.email,
           type: "APPLICATION_SHORTLISTED",
-          payload: JSON.stringify(shortlistPayload({ application: current, job: current.job })),
+          payload: shortlistPayload({ application: current, job: current.job }),
         },
-      });
+        tx
+      );
     }
   });
 
-  if (changedStatus && status === "SHORTLISTED") await deliverQueuedEmail(shortlistKey);
+  if (changedStatus && status === "SHORTLISTED") {
+    await deliverQueuedEmail(shortlistKey);
+  }
+
   return getRecruiterApplication(applicationId, recruiterId);
 };
