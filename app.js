@@ -31,7 +31,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", path.resolve(process.cwd(), "views"));
 // Behind a reverse proxy (Heroku/Render/Nginx) so secure cookies + rate
 // limiting see the real client, not the proxy hop.
 app.set("trust proxy", env.trustProxy);
