@@ -259,7 +259,21 @@
       <div style="background: var(--color-bg); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; margin-top: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
           <div>
-            <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-600);"><%= interview.roundName || `Round ${application.interviews.length - idx}` %></span>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand-600);"><%= interview.roundName || `Round ${application.interviews.length - idx}` %></span>
+              <% if (interview.evaluation) { 
+                const sc = interview.evaluation.overallScore;
+                const scColor = sc >= 75 ? "#10b981" : (sc >= 50 ? "#f59e0b" : "#ef4444");
+              %>
+                <span style="font-size: 0.72rem; font-weight: 800; background: <%= scColor %>18; color: <%= scColor %>; padding: 2px 8px; border-radius: 999px; border: 1px solid <%= scColor %>40;">
+                  Score: <%= sc %>/100 &middot; <%= interview.evaluation.recommendation.replaceAll("_", " ") %>
+                </span>
+              <% } else { %>
+                <span style="font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted); background: var(--color-bg-surface); padding: 2px 8px; border-radius: 999px; border: 1px dashed var(--color-border);">
+                  ⏳ Evaluation Pending
+                </span>
+              <% } %>
+            </div>
             <h3 style="font-size: 1.05rem; font-weight: 700; margin: 2px 0 4px;">
               <%= formatDate(interview.scheduledAt) %> <span style="font-weight: normal; color: var(--color-text-muted); font-size: 0.9rem;">(<%= interview.timezone %>, <%= interview.durationMinutes %>m)</span>
             </h3>
@@ -288,9 +302,16 @@
 
         <!-- Private evaluation form -->
         <div style="background: var(--color-surface); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 14px;">
-          <h4 style="font-size: 0.92rem; font-weight: 700; margin: 0 0 12px; color: var(--color-text);">
-            Private Interviewer Evaluation <span style="font-weight: normal; color: var(--color-text-subtle); font-size: 0.78rem;">(recruiter-only)</span>
-          </h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h4 style="font-size: 0.92rem; font-weight: 700; margin: 0; color: var(--color-text);">
+              Private Interviewer Evaluation <span style="font-weight: normal; color: var(--color-text-subtle); font-size: 0.78rem;">(recruiter-only)</span>
+            </h4>
+            <% if (interview.evaluation) { %>
+              <span style="font-size: 0.78rem; font-weight: 700; color: #059669; display: inline-flex; align-items: center; gap: 4px; background: #ecfdf5; padding: 3px 10px; border-radius: 6px; border: 1px solid #a7f3d0;">
+                <%- icon('check-circle') %> Evaluation Saved &middot; Can be updated anytime
+              </span>
+            <% } %>
+          </div>
           <form action="/recruiter/interviews/<%= interview.id %>/evaluation" method="POST">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
             <div class="score-grid">
@@ -333,7 +354,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-sm">
-              Save private evaluation
+              <%= interview.evaluation ? "Update evaluation score" : "Save private evaluation" %>
             </button>
           </form>
         </div>

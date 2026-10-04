@@ -62,7 +62,8 @@ export const recruiterReviewValidators = [
 ];
 
 export const interviewValidators = [
-  body("scheduledAt").isISO8601().withMessage("Enter a valid future interview time."),
+  // datetime-local sends "2026-10-02T14:30" (no seconds/tz) — use loose ISO8601
+  body("scheduledAt").isISO8601({ strict: false }).withMessage("Enter a valid future interview time."),
   body("timezone").trim().notEmpty().isLength({ max: 80 }).withMessage("Timezone is required."),
   body("durationMinutes").isInt({ min: 15, max: 240 }).withMessage("Duration must be between 15 and 240 minutes."),
   body("meetingUrl").optional({ values: "falsy" }).trim().isURL({ require_protocol: true }).withMessage("Enter a valid meeting URL."),

@@ -360,11 +360,13 @@
   </div>
 
   <!-- ── Input Bar ──────────────────────────────────── -->
-  <form class="wa-input-bar" id="waForm">
+  <form class="wa-input-bar" id="waForm" action="/messages/<%= conversation.id %>/send" method="POST">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="content" id="waHiddenContent" />
     <textarea
       id="waInput"
       class="wa-input"
+      name="content"
       placeholder="Type a message…"
       rows="1"
       autocomplete="off"
@@ -386,6 +388,7 @@
   var form = document.getElementById("waForm");
   var input = document.getElementById("waInput");
   var chips = document.querySelectorAll(".wa-chip");
+  var socketReady = false;
 
   /* ── Helpers ── */
   function escHtml(str) {
@@ -402,9 +405,24 @@
   scrollBottom();
 
   /* ── Socket ── */
-  var socket = io({ withCredentials: true });
+  var socket = io({ withCredentials: true, reconnectionAttempts: 5 });
+
   socket.on("connect", function () {
+    socketReady = true;
     socket.emit("join_room", conversationId);
+  });
+
+  socket.on("connect_error", function (err) {
+    socketReady = false;
+    console.warn("[Chat] Socket connection error:", err.message);
+  });
+
+  socket.on("disconnect", function () {
+    socketReady = false;
+  });
+
+  socket.on("chat_error", function (data) {
+    alert("Message error: " + (data.message || "Failed to send. Please try again."));
   });
 
   socket.on("new_message", function (msg) {
@@ -425,7 +443,6 @@
       el.className = "wa-bubble-row " + (isOut ? "outgoing" : "incoming");
       var avatarHtml = "";
       if (!isOut) {
-        // tiny avatar - inline colour derived from first char code
         var c = ["#0e74d6","#0d9488","#6366f1","#f59e0b","#ef4444"];
         var col = c[otherName.charCodeAt(0) % c.length];
         avatarHtml = '<div class="wa-avatar-tiny" style="background:' + col + ';">' +
@@ -466,29 +483,38 @@
 
   var typingTimeout;
   input.addEventListener("input", function () {
-    socket.emit("typing", { conversationId: conversationId });
+    if (socketReady) socket.emit("typing", { conversationId: conversationId });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(function () {
-      socket.emit("stop_typing", { conversationId: conversationId });
+      if (socketReady) socket.emit("stop_typing", { conversationId: conversationId });
     }, 1500);
     // Auto-resize textarea
     input.style.height = "auto";
     input.style.height = Math.min(input.scrollHeight, 120) + "px";
   });
 
-  /* Send message */
+  /* ── Send Message ── */
+  /* Try socket first; fall back to HTTP POST if socket not connected */
   function sendText(text) {
     text = text.trim();
     if (!text) return;
-    socket.emit("send_message", { conversationId: conversationId, content: text });
-    socket.emit("stop_typing", { conversationId: conversationId });
-    input.value = "";
-    input.style.height = "auto";
-    clearTimeout(typingTimeout);
+
+    if (socketReady) {
+      // Real-time path: socket handles DB write + broadcasts to room
+      socket.emit("send_message", { conversationId: conversationId, content: text });
+      if (socketReady) socket.emit("stop_typing", { conversationId: conversationId });
+      input.value = "";
+      input.style.height = "auto";
+      clearTimeout(typingTimeout);
+    } else {
+      // Fallback: standard HTML form POST (saves to DB + redirects)
+      document.getElementById("waHiddenContent").value = text;
+      form.submit();
+    }
   }
 
   form.addEventListener("submit", function (e) {
-    e.preventDefault();
+    e.preventDefault(); // always intercept; sendText decides which path
     sendText(input.value);
     input.focus();
   });

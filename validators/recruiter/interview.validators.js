@@ -1,8 +1,9 @@
 import { body } from "express-validator";
 
 export const interviewValidators = [
+  // HTML datetime-local sends "2026-10-02T14:30" (no seconds) — use loose ISO8601
   body("scheduledAt")
-    .isISO8601()
+    .isISO8601({ strict: false })
     .withMessage("Enter a valid future interview time."),
   body("timezone")
     .trim()

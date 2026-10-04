@@ -57,31 +57,55 @@
             </td>
             <td>
               <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--brand-600); margin-bottom: 4px;"><%= interview.roundName || "Interview Round" %></div>
-              <span class="status-badge">
+              <span class="status-badge status-<%= interview.status.toLowerCase() %>">
                 <%= interview.status.replaceAll("_", " ") %>
               </span>
             </td>
             <td>
-              <% if (interview.evaluation) { %>
-                <span style="font-weight: 700; color: var(--brand-700);">
-                  <%= interview.evaluation.overallScore %>/100
-                </span>
-                <div class="sub"><%= (interview.evaluation.recommendation || "").replaceAll("_", " ") %></div>
+              <% if (interview.evaluation) { 
+                const score = interview.evaluation.overallScore;
+                const scoreColor = score >= 75 ? "#10b981" : (score >= 50 ? "#f59e0b" : "#ef4444");
+              %>
+                <div style="min-width: 120px;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                    <span style="font-weight: 800; font-size: 0.95rem; color: <%= scoreColor %>;">
+                      <%= score %><span style="font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted);">/100</span>
+                    </span>
+                    <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: <%= scoreColor %>18; color: <%= scoreColor %>;">
+                      <%= (interview.evaluation.recommendation || "").replaceAll("_", " ") %>
+                    </span>
+                  </div>
+                  <div style="width: 100%; height: 6px; background: var(--color-border); border-radius: 999px; overflow: hidden;">
+                    <div style="width: <%= Math.min(100, Math.max(0, score)) %>%; height: 100%; background: <%= scoreColor %>; border-radius: 999px;"></div>
+                  </div>
+                  <div style="font-size: 0.72rem; color: var(--color-text-muted); margin-top: 4px;">
+                    Tech: <%= interview.evaluation.technicalScore %> &middot; Comm: <%= interview.evaluation.communicationScore %>
+                  </div>
+                </div>
               <% } else { %>
-                <span style="color: var(--color-text-subtle); font-size: 0.85rem;">Pending</span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--color-text-subtle); font-size: 0.82rem; background: var(--color-bg); padding: 3px 8px; border-radius: 6px; border: 1px dashed var(--color-border);">
+                  <%- icon('clock') %> Pending
+                </span>
               <% } %>
             </td>
             <td>
-              <% if (interview.result) { %>
-                <span class="status-badge" style="background: var(--brand-50); color: var(--brand-700); font-weight: 600;">
-                  <%- icon('check-circle') %> <%= interview.result.outcome %>
+              <% if (interview.result) { 
+                const outcome = interview.result.outcome;
+                const isHired = outcome === "HIRED";
+                const isRejected = outcome === "REJECTED";
+                const bg = isHired ? "#ecfdf5" : (isRejected ? "#fef2f2" : "#fefce8");
+                const text = isHired ? "#065f46" : (isRejected ? "#991b1b" : "#854d0e");
+                const border = isHired ? "#a7f3d0" : (isRejected ? "#fecaca" : "#fef08a");
+              %>
+                <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; background: <%= bg %>; color: <%= text %>; border: 1px solid <%= border %>;">
+                  <%= isHired ? '🎉' : (isRejected ? '✕' : '⏳') %> <%= outcome.replaceAll("_", " ") %>
                 </span>
               <% } else if (interview.status === "COMPLETED") { %>
-                <a href="/recruiter/interviews/<%= interview.id %>/share-result" class="btn btn-primary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">
-                  Share result
+                <a href="/recruiter/interviews/<%= interview.id %>/share-result" class="btn btn-primary btn-sm" style="padding: 4px 10px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;">
+                  <%- icon('send') %> Share result
                 </a>
               <% } else { %>
-                <span style="color: var(--color-text-subtle); font-size: 0.85rem;">Not shared</span>
+                <span style="color: var(--color-text-subtle); font-size: 0.82rem;">Not shared</span>
               <% } %>
             </td>
             <td style="text-align: right;">
