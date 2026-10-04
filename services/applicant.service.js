@@ -107,6 +107,7 @@ export const getApplicantApplicationDetails = async (applicationId, applicantId)
       interviews: {
         select: {
           id: true,
+          roundName: true,
           scheduledAt: true,
           durationMinutes: true,
           timezone: true,

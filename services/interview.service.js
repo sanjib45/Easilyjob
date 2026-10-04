@@ -299,9 +299,62 @@ export const shareInterviewResult = async ({ recruiterId, interviewId, outcome, 
       tx
     );
 
+    // 2. Auto-update Application status to HIRED or REJECTED
+    if (outcome === "HIRED" || outcome === "REJECTED") {
+      const fromStatus = interview.application.status;
+      if (fromStatus !== outcome) {
+        await updateOwnedApplication(
+          recruiterId,
+          interview.applicationId,
+          {
+            status: outcome,
+            statusUpdatedAt: new Date(),
+          },
+          tx
+        );
+        await createStatusHistory(
+          recruiterId,
+          {
+            applicationId: interview.applicationId,
+            fromStatus,
+            toStatus: outcome,
+            reason: `Interview decision shared: ${outcome}`,
+          },
+          tx
+        );
+      }
+    }
+
     return res;
   });
 
   await deliverQueuedEmail(outboxKey);
+
+  // 3. Post system decision update to direct chat
+  try {
+    const conversation = await getOrCreateChatForApplication({
+      applicationId: interview.applicationId,
+      recruiterId,
+      applicantId: interview.application.applicantId,
+    });
+
+    let botMessage = "";
+    if (outcome === "HIRED") {
+      botMessage = `🎉 CONGRATULATIONS! You have been selected for the position of ${interview.job.designation} at ${interview.job.companyName}!\n\nFeedback Summary:\n"${cleanSummary}"\n\nPlease check your email for the formal offer details and next steps.`;
+    } else if (outcome === "REJECTED") {
+      botMessage = `📋 Interview Decision for ${interview.job.designation}:\n\nFeedback Summary:\n"${cleanSummary}"\n\nThank you for interviewing with ${interview.job.companyName}. We wish you the best in your job search!`;
+    } else {
+      botMessage = `⏳ Interview Status Update for ${interview.job.designation}:\n\nYour application status is currently ON HOLD.\n\nFeedback Summary:\n"${cleanSummary}"`;
+    }
+
+    await postChatMessage({
+      conversationId: conversation.id,
+      senderId: recruiterId,
+      content: botMessage,
+    });
+  } catch (chatErr) {
+    console.error("[interview.service] chat notification on result share error:", chatErr.message);
+  }
+
   return result;
 };

@@ -15,25 +15,28 @@ export const initSocket = (server) => {
   io.use((socket, next) => {
     try {
       const cookieHeader = socket.handshake.headers.cookie || "";
-      const accessCookie = cookieHeader
-        .split("; ")
-        .find((row) => row.startsWith(`${cookieNames.ACCESS_COOKIE}=`));
+      // Robust cookie parser: handles URL-encoded values and multi-value cookies
+      const cookies = Object.fromEntries(
+        cookieHeader.split("; ").map((c) => {
+          const idx = c.indexOf("=");
+          return idx === -1 ? [c, ""] : [c.slice(0, idx), c.slice(idx + 1)];
+        })
+      );
 
-      if (!accessCookie) {
-        return next(new Error("Authentication required"));
+      const token = cookies[cookieNames.ACCESS_COOKIE];
+      if (!token) {
+        return next(new Error("Authentication required — no access token cookie"));
       }
 
-      const token = accessCookie.split("=")[1];
-      const payload = verifyAccessToken(token);
-
+      const payload = verifyAccessToken(decodeURIComponent(token));
       if (!payload || !payload.sub) {
-        return next(new Error("Invalid token"));
+        return next(new Error("Invalid or expired access token"));
       }
 
       socket.userId = payload.sub;
       next();
     } catch (err) {
-      next(new Error("Socket authentication failed"));
+      next(new Error("Socket authentication failed: " + err.message));
     }
   });
 

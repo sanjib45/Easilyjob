@@ -103,17 +103,101 @@ const templates = {
       </div>
     </div>`,
   }),
-  INTERVIEW_RESULT: ({ applicantName, jobTitle, companyName, outcome, summary }) => ({
-    subject: `Interview Result — ${jobTitle} at ${companyName}`,
-    text: `Hi ${applicantName},\n\nYour interview result for "${jobTitle}" at ${companyName} is: ${outcome}.\n\nFeedback Summary:\n${summary}\n\n— ${companyName} Hiring Team`,
-    html: `<p>Hi <strong>${escapeHtml(applicantName)}</strong>,</p>
-      <p>Thank you for taking the time to interview for <strong>${escapeHtml(jobTitle)}</strong> at <strong>${escapeHtml(companyName)}</strong>.</p>
-      <p><strong>Status / Outcome:</strong> <span style="display:inline-block;padding:4px 10px;background:#f0fdfa;color:#0d9488;border-radius:4px;font-weight:700;">${escapeHtml(outcome)}</span></p>
-      <div style="background:#f8fafc;border-left:4px solid #0d9488;padding:12px 16px;margin:16px 0;border-radius:4px;">
-        <p style="margin:0;color:#334155;white-space:pre-wrap;">${escapeHtml(summary)}</p>
+  INTERVIEW_RESULT: ({ applicantName, jobTitle, companyName, outcome, summary, portalUrl = `${env.appUrl}/applicant/applications` }) => {
+    const isHired = outcome === "HIRED";
+    const isRejected = outcome === "REJECTED";
+
+    let subject = `Interview Result — ${jobTitle} at ${companyName}`;
+    if (isHired) subject = `🎉 Congratulations! You have been selected — ${jobTitle} at ${companyName}`;
+    else if (isRejected) subject = `Update on your application — ${jobTitle} at ${companyName}`;
+    else subject = `Interview Status Update — ${jobTitle} at ${companyName}`;
+
+    const text = isHired
+      ? `Dear ${applicantName},\n\nCongratulations! We are thrilled to inform you that you have been selected for the position of "${jobTitle}" at ${companyName}.\n\nFeedback Summary:\n${summary}\n\nNext Steps:\nOur HR team will reach out with your formal offer letter and onboarding details.\n\nLog in to your portal: ${portalUrl}\n\nBest regards,\n${companyName} Hiring Team`
+      : isRejected
+      ? `Dear ${applicantName},\n\nThank you for taking the time to interview for "${jobTitle}" at ${companyName}.\n\nAfter careful consideration, our team has decided to move forward with other candidates at this time.\n\nFeedback Summary:\n${summary}\n\nWe were impressed by your profile and encourage you to keep an eye on our careers page for future opportunities that align with your experience.\n\nBest regards,\n${companyName} Hiring Team`
+      : `Dear ${applicantName},\n\nThank you for interviewing for "${jobTitle}" at ${companyName}. Your application is currently on hold / under review.\n\nFeedback Summary:\n${summary}\n\nWe will update you as soon as possible.\n\nBest regards,\n${companyName} Hiring Team`;
+
+    const accentColor = isHired ? "#10b981" : (isRejected ? "#64748b" : "#0e74d6");
+    const headerGradient = isHired
+      ? "linear-gradient(135deg, #059669 0%, #10b981 100%)"
+      : (isRejected
+        ? "linear-gradient(135deg, #334155 0%, #475569 100%)"
+        : "linear-gradient(135deg, #0e74d6 0%, #0d9488 100%)");
+    const headerIcon = isHired ? "🎉" : (isRejected ? "💼" : "⏳");
+    const headerTitle = isHired ? "Congratulations! You're Selected" : (isRejected ? "Application Status Update" : "Interview Under Review");
+
+    const html = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 24px;">
+      <div style="background: ${headerGradient}; border-radius: 16px 16px 0 0; padding: 32px 32px 24px; text-align: center;">
+        <div style="font-size: 2.8rem; margin-bottom: 8px;">${headerIcon}</div>
+        <h1 style="color: #fff; margin: 0 0 6px; font-size: 1.6rem; font-weight: 800;">${headerTitle}</h1>
+        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 1rem;">${escapeHtml(jobTitle)} &middot; ${escapeHtml(companyName)}</p>
       </div>
-      <p style="color:#64748b;">Best regards,<br/><strong>${escapeHtml(companyName)}</strong> Hiring Team</p>`,
-  }),
+
+      <div style="background: #ffffff; border-radius: 0 0 16px 16px; padding: 32px; border: 1px solid #e2e8f0; border-top: none;">
+        <p style="color: #334155; font-size: 1rem; margin: 0 0 16px;">Dear <strong>${escapeHtml(applicantName)}</strong>,</p>
+
+        ${isHired ? `
+          <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+            <p style="margin: 0; color: #065f46; font-size: 1.05rem; font-weight: 700;">
+              We are thrilled to offer you the position of ${escapeHtml(jobTitle)} at ${escapeHtml(companyName)}!
+            </p>
+            <p style="margin: 6px 0 0; color: #047857; font-size: 0.92rem;">
+              Your performance across the interview process stood out to the entire hiring team.
+            </p>
+          </div>
+        ` : isRejected ? `
+          <p style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin: 0 0 18px;">
+            Thank you for investing your time and effort to interview for the <strong>${escapeHtml(jobTitle)}</strong> position at <strong>${escapeHtml(companyName)}</strong>.
+            While your qualifications and experience are commendable, we have decided to proceed with another candidate whose background more closely matches the specific needs of this role at this time.
+          </p>
+        ` : `
+          <p style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin: 0 0 18px;">
+            Thank you for interviewing for <strong>${escapeHtml(jobTitle)}</strong> at <strong>${escapeHtml(companyName)}</strong>.
+            Our team has completed this round and your application is currently on hold / under active consideration.
+          </p>
+        `}
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+          <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px;">
+            Recruiter's Feedback Summary
+          </div>
+          <div style="color: #1e293b; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; font-style: italic;">
+            "${escapeHtml(summary)}"
+          </div>
+        </div>
+
+        ${isHired ? `
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; margin-bottom: 24px;">
+            <h4 style="margin: 0 0 8px; color: #166534; font-size: 0.95rem; font-weight: 700;">📋 What to Expect Next:</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #15803d; font-size: 0.9rem; line-height: 1.6;">
+              <li>Our People &amp; Culture team will contact you within 2–3 business days with the formal offer package.</li>
+              <li>Please keep your identity, educational, and experience documents ready for pre-onboarding checks.</li>
+            </ul>
+          </div>
+        ` : isRejected ? `
+          <div style="background: #f1f5f9; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px;">
+            <p style="margin: 0; color: #475569; font-size: 0.88rem; line-height: 1.5;">
+              🌟 We truly value your interest in joining ${escapeHtml(companyName)}. We keep strong profiles in our talent community and will reach out if a matching opening arises in the future.
+            </p>
+          </div>
+        ` : ''}
+
+        <div style="text-align: center; margin: 28px 0 16px;">
+          <a href="${escapeHtml(portalUrl)}" style="display: inline-block; background: ${accentColor}; color: #ffffff; font-weight: 700; font-size: 0.95rem; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.12);">
+            ${isHired ? '🚀 Open Candidate Portal →' : 'View Application Portal →'}
+          </a>
+        </div>
+
+        <p style="color: #94a3b8; font-size: 0.82rem; text-align: center; margin: 24px 0 0; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+          Best wishes &middot; <strong>${escapeHtml(companyName)}</strong> Hiring Team via Easily Jobs
+        </p>
+      </div>
+    </div>`;
+
+    return { subject, text, html };
+  },
 };
 
 /**
